@@ -1,0 +1,64 @@
+steps:
+  # Build API image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - -t
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/radar/api:$SHORT_SHA"
+      - -f
+      - Dockerfile.api
+      - .
+
+  # Build Job image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - -t
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/radar/job:$SHORT_SHA"
+      - -f
+      - Dockerfile.job
+      - .
+
+  # Push API image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/radar/api:$SHORT_SHA"
+
+  # Push Job image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/radar/job:$SHORT_SHA"
+
+  # Deploy API to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - radar-imovel-api
+      - --image
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/radar/api:$SHORT_SHA"
+      - --region
+      - "$_REGION"
+      - --platform
+      - managed
+
+  # Run database migrations
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - execute
+      - radar-migrate
+      - --region
+      - "$_REGION"
+      - --wait
+
+substitutions:
+  _REGION: us-central1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
