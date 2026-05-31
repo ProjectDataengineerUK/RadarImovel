@@ -46,3 +46,4 @@ crash.log
 
 # ---- Claude local settings ----
 .claude/settings.local.json
+.venv/
