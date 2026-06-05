@@ -8,6 +8,7 @@ from app.core.config import get_settings
 from app.core.database import SessionLocal
 from app.core.logging import configure_logging
 from app.connectors.caixa import CaixaConnector
+from app.connectors.caixa.detail_scraper import CaixaDetailScraper
 from app.agents.deduplicator import compute_content_hash, find_existing, is_duplicate
 from app.agents.change_detector import detect_and_record_changes
 from app.agents.score_agent import calculate_score
@@ -35,9 +36,10 @@ def publish_event(project_id: str, topic: str, event: dict) -> None:
     publisher.publish(topic_path, json.dumps(event).encode())
 
 
-def run(uf: str) -> None:
-    log.info("job.start", uf=uf)
+def run(uf: str, fetch_detail: bool = True) -> None:
+    log.info("job.start", uf=uf, fetch_detail=fetch_detail)
     connector = CaixaConnector(uf=uf)
+    detail_scraper = CaixaDetailScraper() if fetch_detail else None
 
     with SessionLocal() as session:
         bank = session.query(Bank).filter_by(code="caixa").first()
@@ -69,6 +71,8 @@ def run(uf: str) -> None:
                         existing = find_existing(session, raw_prop.external_code, bank.id)
 
                         if existing is None:
+                            if detail_scraper and normalized.get("official_url"):
+                                normalized = detail_scraper.enrich(normalized, normalized["official_url"])
                             prop = Property(bank_id=bank.id, **normalized)
                             session.add(prop)
                             session.flush()
@@ -116,4 +120,5 @@ if __name__ == "__main__":
     if not uf:
         log.error("job.missing_uf")
         sys.exit(1)
-    run(uf.upper())
+    fetch_detail = os.environ.get("FETCH_DETAIL", "true").lower() != "false"
+    run(uf.upper(), fetch_detail=fetch_detail)
