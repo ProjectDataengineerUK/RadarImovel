@@ -19,6 +19,7 @@ os.environ.setdefault("GCS_BUCKET_RAW", "local")
 from app.connectors.caixa.collector import CaixaConnector  # noqa: E402
 
 UF = (sys.argv[1] if len(sys.argv) > 1 else "SP").upper()
+DETAIL = "--detail" in sys.argv
 
 
 def main() -> None:
@@ -39,17 +40,28 @@ def main() -> None:
         sys.exit(1)
     print(f"[3/3] Parse OK — {len(rows)} imóveis encontrados\n")
 
-    # normaliza os primeiros 3 para inspeção
-    print("=== Amostra (3 primeiros imóveis normalizados) ===")
+    # normaliza os primeiros 3 com detalhe opcional
+    if DETAIL:
+        from app.connectors.caixa.detail_scraper import CaixaDetailScraper
+        detail_scraper = CaixaDetailScraper()
+        print("=== Amostra (3 primeiros imóveis normalizados + detalhe) ===")
+    else:
+        detail_scraper = None
+        print("=== Amostra (3 primeiros imóveis normalizados) — use --detail para enriquecer ===")
+
     for raw_prop in rows[:3]:
         try:
             n = connector.normalize(raw_prop)
+            if detail_scraper and n.get("official_url"):
+                n = detail_scraper.enrich(n, n["official_url"])
             print(
                 f"  [{n['external_code']}] {n['property_type']} | "
                 f"{n['city']}/{n['state']} | "
                 f"R$ {n['current_value']:,.0f} | "
                 f"desc {n['discount_percent'] or 0:.1f}% | "
-                f"{n['occupancy_status']}"
+                f"{n.get('occupancy_status','?')} | "
+                f"CEP={n.get('zipcode','?')} | "
+                f"quartos={n.get('bedrooms','?')}"
             )
         except Exception as exc:
             print(f"  ERRO ao normalizar {raw_prop.external_code}: {exc}")
