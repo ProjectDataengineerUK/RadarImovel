@@ -63,6 +63,8 @@ jobs:
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
+            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw" \
+            --set-secrets="DATABASE_URL=database_url:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest" \
             --project=${{ env.PROJECT_ID }}
 
       - name: Update collect_caixa Cloud Run Job image
@@ -70,8 +72,12 @@ jobs:
           gcloud run jobs update radar-collect-caixa \
             --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }} \
             --region=${{ env.REGION }} \
+            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw" \
+            --set-secrets="DATABASE_URL=database_url:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest" \
             --project=${{ env.PROJECT_ID }} \
           || gcloud run jobs create radar-collect-caixa \
             --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }} \
             --region=${{ env.REGION }} \
+            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw" \
+            --set-secrets="DATABASE_URL=database_url:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest" \
             --project=${{ env.PROJECT_ID }}
