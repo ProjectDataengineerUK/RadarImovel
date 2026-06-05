@@ -6,6 +6,10 @@ terraform {
       version = "~> 5.0"
     }
   }
+  backend "gcs" {
+    bucket = "radarimovel-tfstate"
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {
