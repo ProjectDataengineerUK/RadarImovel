@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from app.models.property import Property, PropertyChange
@@ -38,7 +39,7 @@ def list_properties(
 
 
 @router.get("/{property_id}")
-def get_property(property_id: str, db: Session = Depends(get_db)):
+def get_property(property_id: uuid.UUID, db: Session = Depends(get_db)):
     prop = db.query(Property).filter_by(id=property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")

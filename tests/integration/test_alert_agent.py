@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.models.base import Base
 from app.models.bank import Bank
@@ -17,7 +18,11 @@ from app.agents.alert_agent import match_watchlists, process_property_event
 
 @pytest.fixture(scope="module")
 def engine():
-    eng = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    eng = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(eng)
     return eng
 
@@ -145,5 +150,5 @@ def test_process_event_sends_telegram(seed):
         watchlist = MagicMock()
         mock_match.return_value = [(user, watchlist)]
 
-        asyncio.run(process_property_event({"property_id": "test-id", "event_type": "new"}))
+        asyncio.run(process_property_event({"property_id": str(uuid.uuid4()), "event_type": "new"}))
         mock_channel.send.assert_called_once()

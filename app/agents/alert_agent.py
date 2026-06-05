@@ -1,5 +1,6 @@
 import asyncio
 import json
+import uuid
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
@@ -14,7 +15,7 @@ settings = get_settings()
 
 
 def match_watchlists(session: Session, property_id: str) -> list[tuple[User, Watchlist]]:
-    prop = session.query(Property).filter_by(id=property_id).first()
+    prop = session.query(Property).filter_by(id=uuid.UUID(property_id)).first()
     if not prop:
         return []
 
@@ -56,7 +57,7 @@ async def process_property_event(event: dict) -> None:
 
     with SessionLocal() as session:
         matches = match_watchlists(session, property_id)
-        prop = session.query(Property).filter_by(id=property_id).first()
+        prop = session.query(Property).filter_by(id=uuid.UUID(property_id)).first()
 
         for user, watchlist in matches:
             message = format_property_alert({
