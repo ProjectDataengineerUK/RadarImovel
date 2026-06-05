@@ -70,17 +70,14 @@ jobs:
 
       - name: Update collect_caixa Cloud Run Job image
         run: |
-          gcloud run jobs update radar-collect-caixa \
-            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }} \
-            --region=${{ env.REGION }} \
-            --add-cloudsql-instances=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db \
-            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,CLOUD_SQL_INSTANCE=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db,DB_USER=postgres,DB_NAME=radar" \
-            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest" \
-            --project=${{ env.PROJECT_ID }} \
-          || gcloud run jobs create radar-collect-caixa \
-            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }} \
-            --region=${{ env.REGION }} \
-            --add-cloudsql-instances=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db \
-            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,CLOUD_SQL_INSTANCE=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db,DB_USER=postgres,DB_NAME=radar" \
-            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest" \
+          JOB_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --set-cloudsql-instances=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db
+            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,CLOUD_SQL_INSTANCE=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db,DB_USER=postgres,DB_NAME=radar"
+            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
             --project=${{ env.PROJECT_ID }}
+          )
+          gcloud run jobs describe radar-collect-caixa --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-collect-caixa "${JOB_FLAGS[@]}" \
+            || gcloud run jobs create radar-collect-caixa "${JOB_FLAGS[@]}"
