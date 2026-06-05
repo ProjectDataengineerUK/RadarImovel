@@ -18,10 +18,10 @@ from app.core.logging import logger
 CAIXA_DETAIL_BASE = "https://venda-imoveis.caixa.gov.br"
 
 _RE_CEP = re.compile(r"CEP:\s*(\d{5}-\d{3})")
-_RE_AREA = re.compile(r"rea\s+(?:total|privativa|do terreno)\s*=\s*([\d,\.]+)m", re.I)
 _RE_AREA_LABEL = re.compile(r"rea\s+(total|privativa|do terreno)\s*=\s*([\d,\.]+)m", re.I)
 _RE_DATE = re.compile(r"(\d{2}/\d{2}/\d{4})")
-_RE_DECIMAL = re.compile(r"[\d,\.]+")
+# A Caixa coloca ocupação em comentário HTML: <!--span>Situação: <strong>Ocupado</strong></span><br-->
+_RE_OCUPACAO = re.compile(r"Situa[çc][aã]o:\s*<strong>\s*(Ocupado|Desocupado)\s*</strong>", re.I)
 
 
 def _to_decimal(value: str) -> Decimal | None:
@@ -68,11 +68,16 @@ class CaixaDetailScraper:
         if not html_bytes:
             return {}
 
+        # Ocupação está dentro de comentário HTML — pesquisa no texto bruto antes do parse
+        html_str = html_bytes.decode("utf-8", errors="replace")
+        result: dict = {}
+        m = _RE_OCUPACAO.search(html_str)
+        if m:
+            result["occupancy_status"] = m.group(1).strip()
+
         soup = BeautifulSoup(html_bytes, "lxml", from_encoding="utf-8")
         text = soup.get_text(separator="\n")
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-
-        result: dict = {}
 
         # A página separa labels e valores em linhas distintas.
         # Itera sobre pares (linha atual, próxima linha) para capturar ambos os padrões.
@@ -134,11 +139,6 @@ class CaixaDetailScraper:
                 if d:
                     result["auction_date"] = d
 
-            # Situação do imóvel (removida da Caixa, mantida para regressão futura)
-            if "Desocupado" in ln:
-                result["occupancy_status"] = "Desocupado"
-            elif "Ocupado" in ln and "occupancy_status" not in result:
-                result["occupancy_status"] = "Ocupado"
 
         # Foto: primeira imagem dentro de /fotos/
         img = soup.find("img", src=re.compile(r"^/fotos/"))

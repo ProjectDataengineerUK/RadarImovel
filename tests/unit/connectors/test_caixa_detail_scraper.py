@@ -3,20 +3,27 @@ from decimal import Decimal
 
 from app.connectors.caixa.detail_scraper import CaixaDetailScraper
 
-SAMPLE_HTML = b"""
-<html><body>
-<span>Tipo de im\xf3vel:Apartamento</span>
-<span>Quartos:3</span>
-<span>Garagem:2</span>
-<span>\xc1rea total =120,00m2</span>
-<span>\xc1rea privativa =95,50m2</span>
-<span>Edital:\xa00012/0326 - CPVE/RE</span>
-<span>Leiloeiro(a): MARIA SILVA</span>
-<span>Data da Licita\xe7\xe3o Aberta - 13/07/2026 - 10h00</span>
-<span>Endere\xe7o: RUA DAS FLORES, N. 10, CEP: 01310-100, SAO PAULO - SP</span>
-<img src="/fotos/F123456.jpg" />
-</body></html>
-"""
+SAMPLE_HTML = (
+    b"<html><body>"
+    b"<span>Tipo de im\xc3\xb3vel:Apartamento</span>"
+    b"<span>Quartos:3</span>"
+    b"<span>Garagem:2</span>"
+    b"<span>\xc3\x81rea total =120,00m2</span>"
+    b"<span>\xc3\x81rea privativa =95,50m2</span>"
+    b"<span>Edital:\xc2\xa00012/0326 - CPVE/RE</span>"
+    b"<span>Leiloeiro(a): MARIA SILVA</span>"
+    b"<span>Data da Licita\xc3\xa7\xc3\xa3o Aberta - 13/07/2026 - 10h00</span>"
+    b"<span>Endere\xc3\xa7o: RUA DAS FLORES, N. 10, CEP: 01310-100, SAO PAULO - SP</span>"
+    b"<img src='/fotos/F123456.jpg' />"
+    b"<!--span>Situa\xc3\xa7\xc3\xa3o: <strong>Desocupado</strong></span><br-->"
+    b"</body></html>"
+)
+
+SAMPLE_HTML_OCUPADO = (
+    b"<html><body>"
+    b"<!--span>Situa\xc3\xa7\xc3\xa3o: <strong>Ocupado</strong></span><br-->"
+    b"</body></html>"
+)
 
 
 def test_parse_zipcode():
@@ -71,6 +78,18 @@ def test_parse_photo_url():
     scraper = CaixaDetailScraper()
     result = scraper.parse(SAMPLE_HTML)
     assert result["photo_url"].endswith("/fotos/F123456.jpg")
+
+
+def test_parse_occupancy_desocupado():
+    scraper = CaixaDetailScraper()
+    result = scraper.parse(SAMPLE_HTML)
+    assert result["occupancy_status"] == "Desocupado"
+
+
+def test_parse_occupancy_ocupado():
+    scraper = CaixaDetailScraper()
+    result = scraper.parse(SAMPLE_HTML_OCUPADO)
+    assert result["occupancy_status"] == "Ocupado"
 
 
 def test_parse_empty_returns_empty():
