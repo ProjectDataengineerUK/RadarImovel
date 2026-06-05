@@ -4,9 +4,10 @@ import pandas as pd
 from app.connectors.base import RawProperty
 from app.core.logging import logger
 
-# Mapeamento de colunas do XLSX da Caixa para nomes internos
+# Mapeamento de colunas do CSV da Caixa para nomes internos.
+# Formato atual: CSV separado por ";", encoding latin-1, 2 linhas antes do header.
 COLUMN_MAP = {
-    "Número do imóvel": "external_code",
+    "N° do imóvel": "external_code",
     "UF": "state",
     "Cidade": "city",
     "Bairro": "neighborhood",
@@ -14,11 +15,10 @@ COLUMN_MAP = {
     "Preço": "current_value",
     "Valor de avaliação": "appraisal_value",
     "Desconto": "discount_percent",
+    "Financiamento": "financing_available",
     "Descrição": "title",
     "Modalidade de venda": "sale_modality",
     "Link de acesso": "official_url",
-    "Situação do imóvel": "occupancy_status",
-    "Tipo do imóvel": "property_type",
 }
 
 
@@ -29,7 +29,15 @@ class CaixaParser:
             return
 
         try:
-            df = pd.read_excel(io.BytesIO(raw_bytes), header=0, dtype=str)
+            df = pd.read_csv(
+                io.BytesIO(raw_bytes),
+                sep=";",
+                encoding="latin-1",
+                skiprows=2,
+                header=0,
+                dtype=str,
+            )
+            df.columns = df.columns.str.strip()
             df = df.rename(columns=COLUMN_MAP)
             df = df.dropna(subset=["external_code"])
 

@@ -7,9 +7,14 @@ from app.core.logging import logger
 def _parse_decimal(value: str | None) -> Decimal | None:
     if not value:
         return None
-    cleaned = re.sub(r"[^\d,.]", "", str(value)).replace(",", ".")
+    s = re.sub(r"[^\d,.]", "", str(value))
+    # Formato BR: "106.667,03" — ponto como milhar, vírgula como decimal
+    if "," in s and "." in s:
+        s = s.replace(".", "").replace(",", ".")
+    else:
+        s = s.replace(",", ".")
     try:
-        return Decimal(cleaned)
+        return Decimal(s)
     except InvalidOperation:
         return None
 
@@ -23,6 +28,13 @@ def _parse_discount(value: str | None) -> Decimal | None:
         return d if d <= 100 else d / 100  # normalize % se vier como inteiro
     except InvalidOperation:
         return None
+
+
+def _extract_type(title: str | None) -> str:
+    """Extrai o tipo do imóvel da descrição ('Casa, 62m²...' → 'Casa')."""
+    if not title:
+        return "Imóvel"
+    return str(title).split(",")[0].strip() or "Imóvel"
 
 
 def _normalize_occupancy(value: str | None) -> str:
@@ -53,7 +65,7 @@ class CaixaNormalizer:
                 "external_code": str(d.get("external_code", "")).strip(),
                 "bank_code": self.BANK_CODE,
                 "title": str(d.get("title", "")).strip() or None,
-                "property_type": str(d.get("property_type", "Imóvel")).strip(),
+                "property_type": _extract_type(d.get("title")),
                 "address": str(d.get("address", "")).strip() or None,
                 "neighborhood": str(d.get("neighborhood", "")).strip() or None,
                 "city": str(d.get("city", "")).strip(),

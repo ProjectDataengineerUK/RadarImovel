@@ -15,7 +15,7 @@ CAIXA_UFS = [
 ]
 
 CAIXA_LIST_URL = (
-    "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{uf}.xlsx"
+    "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{uf}.csv"
 )
 
 

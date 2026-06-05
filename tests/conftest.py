@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
-import openpyxl
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -64,40 +63,17 @@ def sample_property(db_session, sample_bank):
 
 
 @pytest.fixture
-def fake_xlsx_bytes():
-    """XLSX com 3 imóveis simulando o formato da Caixa."""
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.append([
-        "Número do imóvel", "UF", "Cidade", "Bairro", "Endereço",
-        "Preço", "Valor de avaliação", "Desconto",
-        "Descrição", "Modalidade de venda", "Link de acesso",
-        "Situação do imóvel", "Tipo do imóvel",
-    ])
-    ws.append([
-        "7654321", "SP", "São Paulo", "Centro", "Rua da Consolação, 100",
-        "350000", "450000", "22.2",
-        "Apartamento 2 quartos", "Licitação Aberta",
-        "https://venda-imoveis.caixa.gov.br/imovel/7654321",
-        "Desocupado", "Apartamento",
-    ])
-    ws.append([
-        "7654322", "SP", "Campinas", "Jardins", "Av. Brasil, 200",
-        "180000", "220000", "18.2",
-        "Casa 3 quartos", "Venda Direta",
-        "https://venda-imoveis.caixa.gov.br/imovel/7654322",
-        "Ocupado", "Casa",
-    ])
-    ws.append([
-        "7654323", "SP", "Santos", "Gonzaga", "Rua do Porto, 50",
-        "500000", "600000", "16.7",
-        "Apartamento frente mar", "Leilão SFI",
-        "https://venda-imoveis.caixa.gov.br/imovel/7654323",
-        "Desocupado", "Apartamento",
-    ])
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()
+def fake_csv_bytes():
+    """CSV no formato atual da Caixa (sep=';', latin-1, 2 linhas antes do header)."""
+    content = (
+        "\n"
+        " Lista de Imóveis da Caixa;;Data de geração:;01/01/2026;;;;;;;\n"
+        " N° do imóvel;UF;Cidade;Bairro;Endereço;Preço;Valor de avaliação;Desconto;Financiamento;Descrição;Modalidade de venda;Link de acesso\n"
+        "7654321;SP;São Paulo;Centro;Rua da Consolação, 100;350.000,00;450.000,00;22.2;Não;Apartamento, 2 quartos;Licitação Aberta;https://venda-imoveis.caixa.gov.br/imovel/7654321\n"
+        "7654322;SP;Campinas;Jardins;Av. Brasil, 200;180.000,00;220.000,00;18.2;Sim;Casa, 3 quartos;Venda Direta;https://venda-imoveis.caixa.gov.br/imovel/7654322\n"
+        "7654323;SP;Santos;Gonzaga;Rua do Porto, 50;500.000,00;600.000,00;16.7;Não;Apartamento, frente mar;Leilão SFI;https://venda-imoveis.caixa.gov.br/imovel/7654323\n"
+    )
+    return content.encode("latin-1")
 
 
 @pytest.fixture
