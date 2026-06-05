@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    database_url: str
+    database_url: str = ""  # local dev only; Cloud Run uses CLOUD_SQL_INSTANCE + DB_* vars
     gcs_bucket_raw: str = "radar-raw"
     pubsub_project_id: str
     pubsub_topic_collect: str = "collect-trigger"
