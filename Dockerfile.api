@@ -7,9 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
-RUN pip install --no-cache-dir .[api]
+RUN pip install --no-cache-dir ".[api,job]"
 
 COPY app/ app/
+COPY jobs/ jobs/
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8080

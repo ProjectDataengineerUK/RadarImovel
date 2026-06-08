@@ -1,19 +1,22 @@
-import subprocess
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from app.core.database import get_db
 from app.models.property import Property
 from app.models.user import Alert
-from app.core.config import get_settings
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+VALID_UFS = {
+    "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
+    "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC",
+    "SE", "SP", "TO",
+}
 
 
 @router.get("/status")
 def collector_status(db: Session = Depends(get_db)):
-    """Status dos coletores: última coleta, imóveis ativos, alertas enviados."""
     total_active = db.query(func.count(Property.id)).filter(Property.status == "active").scalar()
     last_seen = db.query(func.max(Property.last_seen_at)).scalar()
     first_seen_today = db.query(func.count(Property.id)).filter(
@@ -35,29 +38,30 @@ class CollectRequest(BaseModel):
     uf: str
 
 
+def _run_collect(uf: str) -> None:
+    """Executa coleta Caixa em background reutilizando o job existente."""
+    import structlog
+    log = structlog.get_logger()
+    try:
+        from jobs.collect_caixa import run as collect_run
+        collect_run(uf, fetch_detail=False)
+    except SystemExit as exc:
+        log.error("admin.collect.exit", uf=uf, code=exc.code)
+    except Exception as exc:
+        log.error("admin.collect.error", uf=uf, error=str(exc))
+
+
 @router.post("/collect")
-def trigger_collect(req: CollectRequest):
-    """Dispara o Cloud Run Job de coleta para uma UF."""
-    settings = get_settings()
+def trigger_collect(
+    req: CollectRequest,
+    background_tasks: BackgroundTasks,
+):
     uf = req.uf.upper()
-    valid_ufs = {"AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
-                 "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"}
-    if uf not in valid_ufs:
+    if uf not in VALID_UFS:
         raise HTTPException(status_code=400, detail=f"UF inválida: {uf}")
 
-    project = settings.pubsub_project_id or "radarimovel"
-    cmd = [
-        "gcloud", "run", "jobs", "execute", "radar-collect-caixa",
-        f"--region=us-central1",
-        f"--project={project}",
-        f"--update-env-vars=UF={uf}",
-        "--async",
-    ]
-    try:
-        subprocess.run(cmd, check=True, capture_output=True, timeout=30)
-        return {"started": True, "uf": uf}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+    background_tasks.add_task(_run_collect, uf)
+    return {"started": True, "uf": uf}
 
 
 @router.get("/health")
