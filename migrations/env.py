@@ -1,6 +1,5 @@
 from logging.config import fileConfig
 from alembic import context
-from app.core.database import engine
 from app.models.base import Base
 import app.models  # noqa: F401 — registra todos os modelos no metadata
 
@@ -20,6 +19,10 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    # Import engine here (not at module top) so Cloud SQL Connector initialises
+    # only when actually running migrations — not during alembic config loading.
+    from app.core.database import engine  # noqa: PLC0415
+
     with engine.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
