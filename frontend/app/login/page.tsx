@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-<parameter name="content">"use client";
-
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -62,7 +59,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 mb-4">
             <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -74,7 +70,6 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
-          {/* Google */}
           <button
             onClick={handleGoogle}
             disabled={loading}
@@ -95,7 +90,6 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-gray-800" />
           </div>
 
-          {/* E-mail/senha */}
           <form onSubmit={handleSubmit} className="space-y-3">
             <input
               type="email"
