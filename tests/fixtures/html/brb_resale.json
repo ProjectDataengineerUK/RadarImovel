@@ -1,0 +1,37 @@
+{
+  "imoveis": [
+    {
+      "id": "RES-3001",
+      "titulo": "Apartamento, 70m²",
+      "endereco": "QN 5 Conjunto 3",
+      "bairro": "Riacho Fundo",
+      "cidade": "Brasília",
+      "uf": "DF",
+      "valor": "210000.00",
+      "avaliacao": "260000.00",
+      "url": "https://brb.resale.com.br/imovel/RES-3001"
+    },
+    {
+      "id": "RES-3002",
+      "titulo": "Casa, 150m²",
+      "endereco": "Rua 7, Lote 12",
+      "bairro": "Taguatinga",
+      "cidade": "Brasília",
+      "uf": "DF",
+      "valor": "380000.00",
+      "avaliacao": "450000.00",
+      "url": "https://brb.resale.com.br/imovel/RES-3002"
+    },
+    {
+      "id": "RES-3003",
+      "titulo": "Terreno, 400m²",
+      "endereco": "Quadra 8 Lote 1",
+      "bairro": "Gama",
+      "cidade": "Brasília",
+      "uf": "DF",
+      "valor": "120000.00",
+      "avaliacao": "140000.00",
+      "url": "https://brb.resale.com.br/imovel/RES-3003"
+    }
+  ]
+}

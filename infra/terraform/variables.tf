@@ -40,6 +40,18 @@ variable "github_repo" {
 
 # ── Fase 2: Vertex AI / editais ─────────────────────────────────────────────
 
+variable "enabled_banks" {
+  description = "Bancos com coleta agendada (devem ter active=true em banks e connector validado)"
+  type        = list(string)
+  default     = ["caixa"]
+}
+
+variable "bank_request_delay_ms" {
+  description = "Delay padrão entre requisições por banco (ms), respeito a servidores públicos"
+  type        = number
+  default     = 1000
+}
+
 variable "vertex_location" {
   description = "Região do Vertex AI (Gemini)"
   type        = string

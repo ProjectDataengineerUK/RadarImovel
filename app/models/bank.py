@@ -13,6 +13,7 @@ class Bank(Base):
     code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    scraping_strategy: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
 
     sources: Mapped[list["Source"]] = relationship("Source", back_populates="bank")

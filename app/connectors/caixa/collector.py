@@ -1,13 +1,11 @@
-import time
 import tempfile
+import time
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
-
-import httpx
 
 from app.connectors.base import BankConnector, RawProperty
-from app.connectors.caixa.parser import CaixaParser
 from app.connectors.caixa.normalizer import CaixaNormalizer
+from app.connectors.caixa.parser import CaixaParser
 from app.core.config import get_settings
 from app.core.logging import logger
 
@@ -60,7 +58,8 @@ class CaixaConnector(BankConnector):
 
     def _try_playwright(self, url: str) -> bytes:
         try:
-            from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+            from playwright.sync_api import TimeoutError as PWTimeout
+            from playwright.sync_api import sync_playwright
         except ImportError:
             logger.error("caixa.playwright_not_installed")
             return b""

@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from app.connectors.base import RawProperty
 from app.connectors.normalize_utils import (
+    clean_text,
     compute_discount,
     extract_type,
     parse_decimal_br,
@@ -11,8 +12,8 @@ from app.connectors.normalize_utils import (
 from app.core.logging import logger
 
 
-class CaixaNormalizer:
-    BANK_CODE = "caixa"
+class BanrisulNormalizer:
+    BANK_CODE = "banrisul"
 
     def normalize(self, raw: RawProperty) -> dict:
         d = raw.raw_data
@@ -20,28 +21,32 @@ class CaixaNormalizer:
             current_value = parse_decimal_br(d.get("current_value"))
             appraisal_value = parse_decimal_br(d.get("appraisal_value"))
             discount_percent = parse_discount_br(d.get("discount_percent"))
-
             if discount_percent is None:
                 discount_percent = compute_discount(appraisal_value, current_value)
+
+            title = clean_text(d.get("title"))
+            state = (clean_text(d.get("state")) or "RS").upper()[:2]
 
             return {
                 "external_code": str(d.get("external_code", "")).strip(),
                 "bank_code": self.BANK_CODE,
-                "title": str(d.get("title", "")).strip() or None,
-                "property_type": extract_type(d.get("title")),
-                "address": str(d.get("address", "")).strip() or None,
-                "neighborhood": str(d.get("neighborhood", "")).strip() or None,
-                "city": str(d.get("city", "")).strip(),
-                "state": str(d.get("state", "")).strip().upper()[:2],
+                "title": title,
+                "property_type": extract_type(title),
+                "address": clean_text(d.get("address")),
+                "neighborhood": clean_text(d.get("neighborhood")),
+                "city": clean_text(d.get("city")) or "",
+                "state": state,
                 "appraisal_value": appraisal_value,
                 "minimum_value": current_value or Decimal("0"),
                 "current_value": current_value or Decimal("0"),
                 "discount_percent": discount_percent,
                 "occupancy_status": parse_occupancy(d.get("occupancy_status")),
-                "sale_modality": str(d.get("sale_modality", "Não informado")).strip(),
+                "sale_modality": clean_text(d.get("sale_modality")) or "Venda direta",
                 "official_url": str(d.get("official_url", "")).strip(),
                 "status": "active",
             }
         except Exception as exc:
-            logger.error("caixa.normalizer.failed", external_code=raw.external_code, error=str(exc))
+            logger.error(
+                "banrisul.normalizer.failed", external_code=raw.external_code, error=str(exc)
+            )
             raise

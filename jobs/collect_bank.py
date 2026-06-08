@@ -1,4 +1,8 @@
-"""Cloud Run Job: coleta lista de imóveis da Caixa para uma UF."""
+"""Cloud Run Job genérico: coleta imóveis de um banco selecionado por env BANK.
+
+Substitui collect_caixa.py. Toda a orquestração (upload GCS, dedup, change
+detection, publish) é bank-agnostic — o connector é resolvido via registry.
+"""
 import json
 import os
 import sys
@@ -9,8 +13,7 @@ from google.cloud import pubsub_v1, storage
 from app.agents.change_detector import detect_and_record_changes
 from app.agents.deduplicator import compute_content_hash, find_existing
 from app.agents.score_agent import calculate_score
-from app.connectors.caixa import CaixaConnector
-from app.connectors.caixa.detail_scraper import CaixaDetailScraper
+from app.connectors import get_connector
 from app.core.config import get_settings
 from app.core.database import SessionLocal
 from app.core.logging import configure_logging
@@ -18,15 +21,17 @@ from app.models.bank import Bank
 from app.models.property import Property
 
 settings = get_settings()
-log = configure_logging("collect_caixa")
+log = configure_logging("collect_bank")
 
 
-def upload_raw(bucket_name: str, uf: str, raw_bytes: bytes, url: str) -> str:
+def upload_raw(bucket_name: str, bank: str, scope: str, raw_bytes: bytes, url: str) -> str:
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     date_str = datetime.now(UTC).strftime("%Y-%m-%d")
-    filename = url.split("/")[-1] or f"lista_{uf}.xlsx"
-    blob_path = f"raw/caixa/{uf}/{date_str}/{filename}"
+    filename = url.split("/")[-1] or f"lista_{scope}"
+    if "?" in filename:
+        filename = filename.split("?")[0]
+    blob_path = f"raw/{bank}/{scope}/{date_str}/{filename}"
     blob = bucket.blob(blob_path)
     blob.upload_from_string(raw_bytes)
     return f"gs://{bucket_name}/{blob_path}"
@@ -38,29 +43,56 @@ def publish_event(project_id: str, topic: str, event: dict) -> None:
     publisher.publish(topic_path, json.dumps(event).encode())
 
 
-def run(uf: str, fetch_detail: bool = True) -> None:
-    log.info("job.start", uf=uf, fetch_detail=fetch_detail)
-    connector = CaixaConnector(uf=uf)
-    detail_scraper = CaixaDetailScraper() if fetch_detail else None
+def _build_detail_scraper(bank: str, fetch_detail: bool):
+    if bank != "caixa" or not fetch_detail:
+        return None
+    try:
+        from app.connectors.caixa.detail_scraper import CaixaDetailScraper
+
+        return CaixaDetailScraper()
+    except Exception as exc:
+        log.warning("job.detail_scraper_unavailable", bank=bank, error=str(exc))
+        return None
+
+
+def run(bank: str, uf: str | None = None, fetch_detail: bool = True) -> None:
+    bank = bank.lower().strip()
+    dry_run = os.environ.get("DRY_RUN", "").lower() == "true"
+    log.info("job.start", bank=bank, uf=uf, fetch_detail=fetch_detail, dry_run=dry_run)
+
+    try:
+        connector = get_connector(bank, uf=uf) if uf else get_connector(bank)
+    except ValueError as exc:
+        log.error("job.unknown_bank", bank=bank, error=str(exc))
+        sys.exit(1)
+
+    detail_scraper = _build_detail_scraper(bank, fetch_detail)
 
     with SessionLocal() as session:
-        bank = session.query(Bank).filter_by(code="caixa").first()
-        if not bank:
-            log.error("job.bank_not_found", bank="caixa")
+        bank_row = session.query(Bank).filter_by(code=bank).first()
+        if not bank_row:
+            log.error("job.bank_not_found", bank=bank)
             sys.exit(1)
+        if not bank_row.active:
+            log.warning("job.bank_inactive", bank=bank)
+            return
 
         stats = {"collected": 0, "new": 0, "changed": 0, "errors": 0}
+        scope = uf or "nacional"
         sources = connector.discover_sources()
 
         for source_url in sources:
             try:
                 raw_bytes = connector.fetch_raw(source_url)
                 if not raw_bytes:
-                    log.warning("job.empty_response", source_url=source_url)
+                    log.warning("job.empty_response", bank=bank, source_url=source_url)
                     continue
 
-                gcs_path = upload_raw(settings.gcs_bucket_raw, uf, raw_bytes, source_url)
-                log.info("job.raw_uploaded", gcs_path=gcs_path)
+                if not dry_run:
+                    gcs_path = upload_raw(
+                        settings.gcs_bucket_raw, bank, scope, raw_bytes, source_url
+                    )
+                    log.info("job.raw_uploaded", gcs_path=gcs_path)
 
                 for raw_prop in connector.parse(raw_bytes, source_url):
                     try:
@@ -70,12 +102,19 @@ def run(uf: str, fetch_detail: bool = True) -> None:
                         normalized["content_hash"] = content_hash
                         stats["collected"] += 1
 
-                        existing = find_existing(session, raw_prop.external_code, bank.id)
+                        if dry_run:
+                            continue
+
+                        existing = find_existing(
+                            session, raw_prop.external_code, bank_row.id
+                        )
 
                         if existing is None:
                             if detail_scraper and normalized.get("official_url"):
-                                normalized = detail_scraper.enrich(normalized, normalized["official_url"])
-                            prop = Property(bank_id=bank.id, **normalized)
+                                normalized = detail_scraper.enrich(
+                                    normalized, normalized["official_url"]
+                                )
+                            prop = Property(bank_id=bank_row.id, **normalized)
                             session.add(prop)
                             session.flush()
                             publish_event(
@@ -90,13 +129,15 @@ def run(uf: str, fetch_detail: bool = True) -> None:
                                     {
                                         "property_id": str(prop.id),
                                         "edital_url": prop.edital_url,
-                                        "bank_id": str(bank.id),
+                                        "bank_id": str(bank_row.id),
                                     },
                                 )
                             stats["new"] += 1
 
                         elif existing.content_hash != content_hash:
-                            changes = detect_and_record_changes(session, existing, normalized)
+                            changes = detect_and_record_changes(
+                                session, existing, normalized
+                            )
                             for field, val in normalized.items():
                                 if hasattr(existing, field):
                                     setattr(existing, field, val)
@@ -117,26 +158,30 @@ def run(uf: str, fetch_detail: bool = True) -> None:
 
                     except Exception as exc:
                         stats["errors"] += 1
-                        log.error("job.property_error", external_code=raw_prop.external_code, error=str(exc))
+                        log.error(
+                            "job.property_error",
+                            bank=bank,
+                            external_code=raw_prop.external_code,
+                            error=str(exc),
+                        )
 
-                session.commit()
+                if not dry_run:
+                    session.commit()
 
             except Exception as exc:
-                log.error("job.source_error", source_url=source_url, error=str(exc))
+                log.error("job.source_error", bank=bank, source_url=source_url, error=str(exc))
 
-    log.info("job.done", uf=uf, **stats)
+        if stats["collected"] == 0:
+            log.warning("job.zero_properties", bank=bank, scope=scope)
+
+    log.info("job.done", bank=bank, scope=scope, **stats)
 
 
 if __name__ == "__main__":
-    # Deprecado na Fase 3: a coleta da Caixa passa a usar o job genérico
-    # collect_bank com BANK=caixa. Mantido como thin-shim retrocompatível para
-    # não quebrar schedulers existentes; delega à orquestração unificada.
-    os.environ.setdefault("BANK", "caixa")
-    from jobs.collect_bank import run as run_bank
-
-    uf = os.environ.get("UF", "")
-    if not uf:
-        log.error("job.missing_uf")
+    bank = os.environ.get("BANK", "").strip()
+    if not bank:
+        log.error("job.missing_bank")
         sys.exit(1)
+    uf = os.environ.get("UF", "").strip() or None
     fetch_detail = os.environ.get("FETCH_DETAIL", "true").lower() != "false"
-    run_bank("caixa", uf=uf.upper(), fetch_detail=fetch_detail)
+    run(bank, uf=uf.upper() if uf else None, fetch_detail=fetch_detail)

@@ -58,6 +58,33 @@ resource "google_cloud_run_v2_job" "collect_caixa" {
   depends_on = [google_project_service.apis]
 }
 
+# Fase 3: job genérico de coleta por banco. BANK é injetado por execução
+# (gcloud run jobs execute radar-collect-bank --update-env-vars BANK=<bank>).
+resource "google_cloud_run_v2_job" "collect_bank" {
+  name     = "radar-collect-bank"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "3600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.collect_bank"]
+        env {
+          name  = "BANK"
+          value = "" # default vazio; cada execução faz override
+        }
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
 resource "google_cloud_run_v2_job" "process_alerts" {
   name     = "radar-process-alerts"
   location = var.region

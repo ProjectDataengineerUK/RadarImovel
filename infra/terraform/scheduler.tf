@@ -23,3 +23,30 @@ resource "google_cloud_scheduler_job" "collect_caixa" {
     }))
   }
 }
+
+# ── Fase 3: schedulers por banco habilitado (var.enabled_banks) ──────────────
+# Cada banco (exceto caixa, já coberto acima) coleta de forma nacional.
+# Produto cartesiano banco × horário.
+locals {
+  fase3_banks = setsubtract(toset(var.enabled_banks), toset(["caixa"]))
+  bank_schedule_pairs = {
+    for pair in setproduct(tolist(local.fase3_banks), local.schedules) :
+    "${pair[0]}-${replace(pair[1], " ", "-")}" => { bank = pair[0], cron = pair[1] }
+  }
+}
+
+resource "google_cloud_scheduler_job" "collect_bank" {
+  for_each = local.bank_schedule_pairs
+
+  name      = "collect-${each.value.bank}-${replace(each.value.cron, " ", "-")}"
+  schedule  = each.value.cron
+  time_zone = "UTC"
+
+  pubsub_target {
+    topic_name = google_pubsub_topic.collect_trigger.id
+    data = base64encode(jsonencode({
+      bank = each.value.bank
+      ufs  = []
+    }))
+  }
+}
