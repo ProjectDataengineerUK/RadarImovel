@@ -15,6 +15,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
@@ -23,12 +24,12 @@ export function useAuth() {
   }, []);
 
   const login = (email: string, password: string) =>
-    signInWithEmailAndPassword(auth, email, password);
+    signInWithEmailAndPassword(auth!, email, password);
 
   const register = (email: string, password: string) =>
-    createUserWithEmailAndPassword(auth, email, password);
+    createUserWithEmailAndPassword(auth!, email, password);
 
-  const logout = () => signOut(auth);
+  const logout = () => signOut(auth!);
 
   return { user, loading, login, register, logout };
 }

@@ -17,6 +17,15 @@ provider "google" {
   region  = var.region
 }
 
+resource "google_artifact_registry_repository" "radar" {
+  repository_id = "radar"
+  location      = var.region
+  format        = "DOCKER"
+  description   = "Radar Imóvel Docker images"
+
+  depends_on = [google_project_service.apis]
+}
+
 resource "google_project_service" "apis" {
   for_each = toset([
     "run.googleapis.com",
@@ -26,8 +35,10 @@ resource "google_project_service" "apis" {
     "cloudscheduler.googleapis.com",
     "secretmanager.googleapis.com",
     "firebase.googleapis.com",
-    "vpcaccess.googleapis.com",
-    "servicenetworking.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
   ])
   service            = each.key
   disable_on_destroy = false

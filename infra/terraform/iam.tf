@@ -1,3 +1,5 @@
+# ── Application service accounts ────────────────────────────────────────────
+
 resource "google_service_account" "api_sa" {
   account_id   = "radar-api"
   display_name = "Radar Imóvel — API"
@@ -8,7 +10,7 @@ resource "google_service_account" "job_sa" {
   display_name = "Radar Imóvel — Cloud Run Jobs"
 }
 
-# API SA: Cloud SQL, Secret Manager
+# API SA permissions
 resource "google_project_iam_member" "api_sql" {
   project = var.project_id
   role    = "roles/cloudsql.client"
@@ -27,7 +29,7 @@ resource "google_project_iam_member" "api_pubsub_publisher" {
   member  = "serviceAccount:${google_service_account.api_sa.email}"
 }
 
-# Job SA: Cloud SQL, GCS, Pub/Sub, Secret Manager
+# Job SA permissions
 resource "google_project_iam_member" "job_sql" {
   project = var.project_id
   role    = "roles/cloudsql.client"
@@ -52,11 +54,59 @@ resource "google_project_iam_member" "job_secrets" {
   member  = "serviceAccount:${google_service_account.job_sa.email}"
 }
 
-# Cloud Run API: público (sem auth no nível do Cloud Run — auth feita pelo Firebase no FastAPI)
-resource "google_cloud_run_v2_service_iam_member" "api_public" {
-  project  = var.project_id
-  location = var.region
-  name     = google_cloud_run_v2_service.api.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
+# ── GitHub Actions — Workload Identity Federation ────────────────────────────
+
+resource "google_service_account" "github_actions" {
+  account_id   = "github-actions"
+  display_name = "GitHub Actions — CI/CD"
+}
+
+resource "google_iam_workload_identity_pool" "github" {
+  workload_identity_pool_id = "github-pool"
+  display_name              = "GitHub Actions"
+}
+
+resource "google_iam_workload_identity_pool_provider" "github" {
+  workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
+  workload_identity_pool_provider_id = "github-provider"
+  display_name                       = "GitHub Provider"
+
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
+
+  attribute_mapping = {
+    "google.subject"       = "assertion.sub"
+    "attribute.actor"      = "assertion.actor"
+    "attribute.repository" = "assertion.repository"
+  }
+
+  # Only allow tokens from this specific repo
+  attribute_condition = "assertion.repository == '${var.github_repo}'"
+}
+
+resource "google_service_account_iam_member" "github_wif" {
+  service_account_id = google_service_account.github_actions.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repo}"
+}
+
+# github-actions SA permissions
+resource "google_project_iam_member" "gh_artifact_writer" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "gh_run_developer" {
+  project = var.project_id
+  role    = "roles/run.developer"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Needed to deploy Cloud Run with a specific service account
+resource "google_project_iam_member" "gh_sa_user" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountUser"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
 }

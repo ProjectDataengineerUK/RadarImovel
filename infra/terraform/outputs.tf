@@ -3,14 +3,19 @@ output "api_url" {
   value       = google_cloud_run_v2_service.api.uri
 }
 
+output "frontend_url" {
+  description = "Cloud Run Frontend URL"
+  value       = google_cloud_run_v2_service.frontend.uri
+}
+
 output "db_connection_name" {
-  description = "Cloud SQL connection name"
+  description = "Cloud SQL connection name (use as CLOUD_SQL_INSTANCE)"
   value       = google_sql_database_instance.main.connection_name
 }
 
-output "db_private_ip" {
-  description = "Cloud SQL private IP"
-  value       = google_sql_database_instance.main.private_ip_address
+output "db_public_ip" {
+  description = "Cloud SQL public IP"
+  value       = google_sql_database_instance.main.public_ip_address
 }
 
 output "gcs_bucket_raw" {
@@ -26,4 +31,14 @@ output "pubsub_collect_trigger" {
 output "pubsub_property_events" {
   description = "Pub/Sub topic for property events"
   value       = google_pubsub_topic.property_events.id
+}
+
+output "wif_provider" {
+  description = "Workload Identity Provider (use in deploy.yml WIF_PROVIDER)"
+  value       = google_iam_workload_identity_pool_provider.github.name
+}
+
+output "github_actions_sa" {
+  description = "GitHub Actions service account email (use in deploy.yml SERVICE_ACCOUNT)"
+  value       = google_service_account.github_actions.email
 }

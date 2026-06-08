@@ -10,9 +10,17 @@ env:
   REGION: us-central1
   REGISTRY: us-central1-docker.pkg.dev
   REPO: radar
+  # These must match the Cloud SQL instance name in Terraform (cloud_sql.tf → name = "radar-db")
+  CLOUD_SQL_INSTANCE: radarimovel:us-central1:radar-db
+  DB_USER: radar_app
+  DB_NAME: radar
+  # Filled by terraform output api_url after first apply
   API_URL: https://radar-imovel-api-ebtyy3lmba-uc.a.run.app
+  # Service accounts provisioned by Terraform (iam.tf)
   WIF_PROVIDER: projects/967459289585/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: github-actions@radarimovel.iam.gserviceaccount.com
+  API_SA: radar-api@radarimovel.iam.gserviceaccount.com
+  JOB_SA: radar-job@radarimovel.iam.gserviceaccount.com
 
 jobs:
   deploy:
@@ -36,6 +44,8 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      # ── Build & push images ─────────────────────────────────────────────────
 
       - name: Build & push API image
         uses: docker/build-push-action@v5
@@ -66,9 +76,14 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/frontend:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_API_URL=${{ env.API_URL }}
+            NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
             NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }}
+            NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ── Deploy services ─────────────────────────────────────────────────────
 
       - name: Deploy API to Cloud Run
         run: |
@@ -77,8 +92,8 @@ jobs:
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --add-cloudsql-instances=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db \
-            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,CLOUD_SQL_INSTANCE=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db,DB_USER=postgres,DB_NAME=radar" \
+            --service-account=${{ env.API_SA }} \
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw" \
             --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest" \
             --project=${{ env.PROJECT_ID }}
 
@@ -92,16 +107,55 @@ jobs:
             --port=8080 \
             --project=${{ env.PROJECT_ID }}
 
-      - name: Update collect_caixa Cloud Run Job image
+      # ── Update Cloud Run Jobs ───────────────────────────────────────────────
+
+      - name: Update radar-collect-caixa image
         run: |
           JOB_FLAGS=(
             --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
             --region=${{ env.REGION }}
-            --set-cloudsql-instances=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db
-            --set-env-vars="PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,CLOUD_SQL_INSTANCE=${{ env.PROJECT_ID }}:${{ env.REGION }}:radar-db,DB_USER=postgres,DB_NAME=radar"
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw"
             --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
             --project=${{ env.PROJECT_ID }}
           )
           gcloud run jobs describe radar-collect-caixa --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
             && gcloud run jobs update radar-collect-caixa "${JOB_FLAGS[@]}" \
-            || gcloud run jobs create radar-collect-caixa "${JOB_FLAGS[@]}"
+            || gcloud run jobs create radar-collect-caixa "${JOB_FLAGS[@]}" --command="python,jobs/collect_caixa.py" --max-retries=1 --task-timeout=3600s
+
+      - name: Update radar-process-alerts image
+        run: |
+          JOB_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }}"
+            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
+            --project=${{ env.PROJECT_ID }}
+          )
+          gcloud run jobs describe radar-process-alerts --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-process-alerts "${JOB_FLAGS[@]}" \
+            || gcloud run jobs create radar-process-alerts "${JOB_FLAGS[@]}" --command="python,jobs/process_alerts.py" --max-retries=2 --task-timeout=300s
+
+      - name: Update radar-migrate image
+        run: |
+          JOB_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }}"
+            --set-secrets="DB_PASSWORD=db_password:latest"
+            --project=${{ env.PROJECT_ID }}
+          )
+          gcloud run jobs describe radar-migrate --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-migrate "${JOB_FLAGS[@]}" \
+            || gcloud run jobs create radar-migrate "${JOB_FLAGS[@]}" --command="alembic,upgrade,head" --max-retries=0 --task-timeout=300s
+
+      # ── Run migrations ──────────────────────────────────────────────────────
+
+      - name: Run database migrations
+        run: |
+          gcloud run jobs execute radar-migrate \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --wait

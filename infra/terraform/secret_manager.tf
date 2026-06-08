@@ -1,38 +1,29 @@
-resource "google_secret_manager_secret" "db_url" {
-  secret_id = "radar-db-url"
-  replication {
-    auto {}
-  }
+resource "google_secret_manager_secret" "db_password" {
+  secret_id = "db_password"
+  replication { auto {} }
 }
 
-resource "google_secret_manager_secret_version" "db_url" {
-  secret = google_secret_manager_secret.db_url.id
-  secret_data = (
-    "postgresql+pg8000://radar_app:${var.db_password}@/${google_sql_database.radar.name}"
-    "?unix_sock=/cloudsql/${google_sql_database_instance.main.connection_name}/.s.PGSQL.5432"
-  )
+resource "google_secret_manager_secret_version" "db_password" {
+  secret      = google_secret_manager_secret.db_password.id
+  secret_data = var.db_password
 }
 
-resource "google_secret_manager_secret" "telegram_token" {
-  secret_id = "radar-telegram-token"
-  replication {
-    auto {}
-  }
+resource "google_secret_manager_secret" "telegram_bot_token" {
+  secret_id = "telegram_bot_token"
+  replication { auto {} }
 }
 
-resource "google_secret_manager_secret_version" "telegram_token" {
-  secret      = google_secret_manager_secret.telegram_token.id
+resource "google_secret_manager_secret_version" "telegram_bot_token" {
+  secret      = google_secret_manager_secret.telegram_bot_token.id
   secret_data = var.telegram_bot_token
 }
 
-resource "google_secret_manager_secret" "firebase_creds" {
-  secret_id = "radar-firebase-creds"
-  replication {
-    auto {}
-  }
+resource "google_secret_manager_secret" "firebase_credentials_json" {
+  secret_id = "firebase_credentials_json"
+  replication { auto {} }
 }
 
-resource "google_secret_manager_secret_version" "firebase_creds" {
-  secret      = google_secret_manager_secret.firebase_creds.id
+resource "google_secret_manager_secret_version" "firebase_credentials_json" {
+  secret      = google_secret_manager_secret.firebase_credentials_json.id
   secret_data = var.firebase_credentials_json
 }

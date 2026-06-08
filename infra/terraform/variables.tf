@@ -10,7 +10,7 @@ variable "region" {
 }
 
 variable "db_password" {
-  description = "Cloud SQL PostgreSQL password"
+  description = "Cloud SQL password for the radar_app user"
   type        = string
   sensitive   = true
 }
@@ -22,7 +22,7 @@ variable "telegram_bot_token" {
 }
 
 variable "firebase_credentials_json" {
-  description = "Firebase service account JSON"
+  description = "Firebase service account JSON (entire file content)"
   type        = string
   sensitive   = true
 }
@@ -33,12 +33,7 @@ variable "environment" {
   default     = "production"
 }
 
-variable "api_image" {
-  description = "Docker image for the API (Cloud Run)"
-  type        = string
-}
-
-variable "job_image" {
-  description = "Docker image for Cloud Run Jobs"
+variable "github_repo" {
+  description = "GitHub repo in owner/name format (e.g. ProjectDataengineerUK/RadarImovel)"
   type        = string
 }
