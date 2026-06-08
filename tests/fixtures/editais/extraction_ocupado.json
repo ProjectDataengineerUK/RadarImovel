@@ -1,0 +1,20 @@
+{
+  "edital_number": "0009999-2026",
+  "auction_date_1st": "2026-07-10",
+  "auction_date_2nd": null,
+  "minimum_bid_1st": 120000.00,
+  "minimum_bid_2nd": null,
+  "appraisal_value": 200000.00,
+  "payment_modalities": ["vista"],
+  "occupancy_detail": "ocupado_com_acao_judicial",
+  "encumbrances": [
+    {"type": "iptu", "amount_approx": 50000.00, "description": "IPTU em atraso 2019-2025"},
+    {"type": "hipoteca", "amount_approx": null, "description": "Hipoteca registrada na matrícula"}
+  ],
+  "total_debt_estimate": 50000.00,
+  "registration_number": "67890",
+  "auctioneer_name": "Maria Souza Leiloeira Oficial",
+  "risk_flags": ["ocupado", "divida_elevada", "onus_registrado", "leilao_judicial"],
+  "risk_level": "high",
+  "extraction_confidence": 0.85
+}

@@ -1,12 +1,19 @@
+import json
+import uuid
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 from sqlalchemy import func, text
+from sqlalchemy.orm import Session
+
+from app.core.config import get_settings
 from app.core.database import get_db
+from app.models.document import Document
 from app.models.property import Property
 from app.models.user import Alert
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+settings = get_settings()
 
 VALID_UFS = {
     "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
@@ -62,6 +69,41 @@ def trigger_collect(
 
     background_tasks.add_task(_run_collect, uf)
     return {"started": True, "uf": uf}
+
+
+@router.post("/reprocess-edital/{property_id}")
+def reprocess_edital(property_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Re-extração manual do edital: reseta o Document e republica em edital-events."""
+    from google.cloud import pubsub_v1
+
+    prop = db.query(Property).filter_by(id=property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    if not prop.edital_url:
+        raise HTTPException(status_code=400, detail="Property sem edital_url")
+
+    doc = (
+        db.query(Document)
+        .filter_by(property_id=property_id, document_type="edital")
+        .first()
+    )
+    if doc:
+        doc.processing_status = "pending"
+        doc.processing_error = None
+        db.commit()
+
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path(
+        settings.pubsub_project_id, settings.pubsub_topic_editais
+    )
+    event = {
+        "property_id": str(prop.id),
+        "edital_url": prop.edital_url,
+        "bank_id": str(prop.bank_id),
+    }
+    publisher.publish(topic_path, json.dumps(event).encode())
+
+    return {"reprocessing": True, "property_id": str(prop.id)}
 
 
 @router.get("/health")

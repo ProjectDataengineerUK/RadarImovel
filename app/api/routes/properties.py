@@ -1,8 +1,12 @@
+import json
 import uuid
-from fastapi import APIRouter, Depends, Query, HTTPException
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.models.property import Property, PropertyChange
+
 from app.core.database import get_db
+from app.models.document import Document
+from app.models.property import Property, PropertyChange
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 
@@ -49,4 +53,34 @@ def get_property(property_id: uuid.UUID, db: Session = Depends(get_db)):
         .order_by(PropertyChange.detected_at.desc())
         .all()
     )
-    return {"property": prop, "changes": changes}
+
+    edital_doc = (
+        db.query(Document)
+        .filter_by(property_id=property_id, document_type="edital")
+        .first()
+    )
+    edital_processed = bool(
+        edital_doc
+        and edital_doc.processing_status == "done"
+        and edital_doc.ai_summary
+    )
+    edital = None
+    if edital_processed:
+        try:
+            extraction = json.loads(edital_doc.ai_summary)
+        except (TypeError, ValueError):
+            extraction = {}
+            edital_processed = False
+        else:
+            edital = {
+                **extraction,
+                "processing_status": edital_doc.processing_status,
+                "processed_at": edital_doc.processed_at,
+            }
+
+    return {
+        "property": prop,
+        "changes": changes,
+        "edital_processed": edital_processed,
+        "edital": edital,
+    }

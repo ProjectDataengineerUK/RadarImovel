@@ -1,14 +1,17 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, ForeignKey
+from decimal import Decimal
+
+from sqlalchemy import TIMESTAMP, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.models.base import Base, new_uuid, utcnow
 
 
 class Document(Base):
     """Documentos brutos associados a imóveis (editais, laudos, etc.).
-    Schema completo desde o MVP — Document AI entra na Fase 2 sem migration."""
+    Campos de controle de processamento adicionados na Fase 2 (migration 004)."""
     __tablename__ = "documents"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
@@ -21,4 +24,8 @@ class Document(Base):
     mime_type: Mapped[str | None] = mapped_column(String(100))
     extracted_text: Mapped[str | None] = mapped_column(Text)  # Document AI output — Fase 2
     ai_summary: Mapped[str | None] = mapped_column(Text)      # Gemini summary — Fase 2
+    processing_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    processing_error: Mapped[str | None] = mapped_column(Text)
+    processed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    extraction_confidence: Mapped[Decimal | None] = mapped_column(Numeric(3, 2))
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)

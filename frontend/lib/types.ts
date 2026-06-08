@@ -28,6 +28,41 @@ export interface Property {
   status: string;
   first_seen_at: string;
   last_seen_at: string;
+  edital_url?: string | null;
+  auctioneer_name?: string | null;
+}
+
+export interface Encumbrance {
+  type: string;
+  amount_approx: number | null;
+  description: string;
+}
+
+export interface Edital {
+  edital_number: string | null;
+  auction_date_1st: string | null;
+  auction_date_2nd: string | null;
+  minimum_bid_1st: number | null;
+  minimum_bid_2nd: number | null;
+  appraisal_value: number | null;
+  payment_modalities: string[];
+  occupancy_detail: string | null;
+  encumbrances: Encumbrance[];
+  total_debt_estimate: number | null;
+  registration_number: string | null;
+  auctioneer_name: string | null;
+  risk_flags: string[];
+  risk_level: string | null;
+  extraction_confidence: number | null;
+  processing_status: string | null;
+  processed_at: string | null;
+}
+
+export interface PropertyDetailResponse {
+  property: Property;
+  changes: PropertyChange[];
+  edital_processed: boolean;
+  edital: Edital | null;
 }
 
 export interface PropertyChange {

@@ -39,6 +39,7 @@ resource "google_project_service" "apis" {
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
     "sts.googleapis.com",
+    "aiplatform.googleapis.com",
   ])
   service            = each.key
   disable_on_destroy = false

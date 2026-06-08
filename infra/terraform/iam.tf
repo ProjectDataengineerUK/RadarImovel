@@ -54,6 +54,13 @@ resource "google_project_iam_member" "job_secrets" {
   member  = "serviceAccount:${google_service_account.job_sa.email}"
 }
 
+# Fase 2: Vertex AI (Gemini) para process_editais
+resource "google_project_iam_member" "job_vertex" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.job_sa.email}"
+}
+
 # ── GitHub Actions — Workload Identity Federation ────────────────────────────
 
 resource "google_service_account" "github_actions" {

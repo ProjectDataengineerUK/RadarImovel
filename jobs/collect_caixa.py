@@ -1,17 +1,19 @@
 """Cloud Run Job: coleta lista de imóveis da Caixa para uma UF."""
+import json
 import os
 import sys
-import json
-from datetime import datetime, timezone
-from google.cloud import storage, pubsub_v1
+from datetime import UTC, datetime
+
+from google.cloud import pubsub_v1, storage
+
+from app.agents.change_detector import detect_and_record_changes
+from app.agents.deduplicator import compute_content_hash, find_existing
+from app.agents.score_agent import calculate_score
+from app.connectors.caixa import CaixaConnector
+from app.connectors.caixa.detail_scraper import CaixaDetailScraper
 from app.core.config import get_settings
 from app.core.database import SessionLocal
 from app.core.logging import configure_logging
-from app.connectors.caixa import CaixaConnector
-from app.connectors.caixa.detail_scraper import CaixaDetailScraper
-from app.agents.deduplicator import compute_content_hash, find_existing, is_duplicate
-from app.agents.change_detector import detect_and_record_changes
-from app.agents.score_agent import calculate_score
 from app.models.bank import Bank
 from app.models.property import Property
 
@@ -22,7 +24,7 @@ log = configure_logging("collect_caixa")
 def upload_raw(bucket_name: str, uf: str, raw_bytes: bytes, url: str) -> str:
     client = storage.Client()
     bucket = client.bucket(bucket_name)
-    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date_str = datetime.now(UTC).strftime("%Y-%m-%d")
     filename = url.split("/")[-1] or f"lista_{uf}.xlsx"
     blob_path = f"raw/caixa/{uf}/{date_str}/{filename}"
     blob = bucket.blob(blob_path)
@@ -81,6 +83,16 @@ def run(uf: str, fetch_detail: bool = True) -> None:
                                 settings.pubsub_topic_events,
                                 {"property_id": str(prop.id), "event_type": "new"},
                             )
+                            if prop.edital_url:
+                                publish_event(
+                                    settings.pubsub_project_id,
+                                    settings.pubsub_topic_editais,
+                                    {
+                                        "property_id": str(prop.id),
+                                        "edital_url": prop.edital_url,
+                                        "bank_id": str(bank.id),
+                                    },
+                                )
                             stats["new"] += 1
 
                         elif existing.content_hash != content_hash:
@@ -88,7 +100,7 @@ def run(uf: str, fetch_detail: bool = True) -> None:
                             for field, val in normalized.items():
                                 if hasattr(existing, field):
                                     setattr(existing, field, val)
-                            existing.last_seen_at = datetime.now(timezone.utc)
+                            existing.last_seen_at = datetime.now(UTC)
                             if changes:
                                 publish_event(
                                     settings.pubsub_project_id,
@@ -101,7 +113,7 @@ def run(uf: str, fetch_detail: bool = True) -> None:
                                 )
                                 stats["changed"] += 1
                         else:
-                            existing.last_seen_at = datetime.now(timezone.utc)
+                            existing.last_seen_at = datetime.now(UTC)
 
                     except Exception as exc:
                         stats["errors"] += 1

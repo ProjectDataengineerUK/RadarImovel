@@ -79,6 +79,27 @@ resource "google_cloud_run_v2_job" "process_alerts" {
   depends_on = [google_project_service.apis]
 }
 
+resource "google_cloud_run_v2_job" "process_editais" {
+  name     = "radar-process-editais"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "jobs/process_editais.py"]
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
 resource "google_cloud_run_v2_job" "migrate" {
   name     = "radar-migrate"
   location = var.region

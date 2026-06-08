@@ -1,16 +1,20 @@
-import io
+import json
 import uuid
+from datetime import UTC, datetime
 from decimal import Decimal
-from datetime import datetime, timezone
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.models.base import Base
 from app.models.bank import Bank
+from app.models.base import Base
+from app.models.document import Document
 from app.models.property import Property
+
+FIXTURES_EDITAIS = Path(__file__).parent / "fixtures" / "editais"
 
 
 @pytest.fixture(scope="session")
@@ -54,8 +58,8 @@ def sample_property(db_session, sample_bank):
         official_url="https://venda-imoveis.caixa.gov.br/imovel/1234567",
         status="active",
         content_hash="abc123def456" + "0" * 52,
-        first_seen_at=datetime.now(timezone.utc),
-        last_seen_at=datetime.now(timezone.utc),
+        first_seen_at=datetime.now(UTC),
+        last_seen_at=datetime.now(UTC),
     )
     db_session.add(prop)
     db_session.flush()
@@ -81,3 +85,77 @@ def mock_telegram():
     mock = MagicMock()
     mock.send = MagicMock(return_value=True)
     return mock
+
+
+@pytest.fixture
+def document_factory(db_session, sample_bank):
+    """Cria um Document de edital para um Property dado."""
+
+    def _make(property_id, *, status="pending", ai_summary=None, confidence=None):
+        doc = Document(
+            id=uuid.uuid4(),
+            property_id=property_id,
+            bank_id=sample_bank.id,
+            document_type="edital",
+            gcs_path="gs://radar-imovel-docs/editais/caixa/GO/x.pdf",
+            original_url="https://caixa.gov.br/edital.pdf",
+            processing_status=status,
+            ai_summary=ai_summary,
+            extraction_confidence=Decimal(str(confidence)) if confidence is not None else None,
+        )
+        db_session.add(doc)
+        db_session.flush()
+        return doc
+
+    return _make
+
+
+@pytest.fixture
+def mock_vertex(monkeypatch):
+    """Substitui a geração do Gemini por uma resposta determinística (JSON fixture)."""
+
+    def _make(json_path):
+        payload = Path(json_path).read_text()
+
+        def _gen(model_name, gcs_uri, user_prompt):
+            return payload
+
+        monkeypatch.setattr(
+            "app.connectors.caixa.edital_extractor._generate", _gen
+        )
+        monkeypatch.setattr(
+            "app.connectors.caixa.edital_extractor._init_vertex", lambda: None
+        )
+        return json.loads(payload)
+
+    return _make
+
+
+@pytest.fixture
+def mock_gcs(monkeypatch):
+    """Patch de storage.Client para upload no-op retornando URI fake."""
+
+    uploaded = {}
+
+    class _Blob:
+        def __init__(self, name):
+            self.name = name
+
+        def upload_from_string(self, data, content_type=None):
+            uploaded["data"] = data
+            uploaded["content_type"] = content_type
+
+    class _Bucket:
+        def __init__(self, name):
+            self.name = name
+
+        def blob(self, name):
+            uploaded["blob_path"] = name
+            return _Blob(name)
+
+    class _Client:
+        def bucket(self, name):
+            return _Bucket(name)
+
+    monkeypatch.setattr("jobs.process_editais.storage.Client", lambda *a, **k: _Client())
+    return uploaded

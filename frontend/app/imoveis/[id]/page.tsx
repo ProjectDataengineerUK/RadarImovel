@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useProperty } from "@/hooks/useProperties";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import ScoreBadge from "@/components/ScoreBadge";
+import EditalSection from "@/components/EditalSection";
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,7 +14,7 @@ export default function PropertyDetailPage() {
   if (isLoading) return <div className="p-8 text-gray-500">Carregando...</div>;
   if (isError || !data) return <div className="p-8 text-red-500">Imóvel não encontrado.</div>;
 
-  const { property: p, changes } = data;
+  const { property: p, changes, edital_processed, edital } = data;
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8">
@@ -49,6 +50,8 @@ export default function PropertyDetailPage() {
           Ver no site oficial
         </a>
       </div>
+
+      {edital_processed && edital && <EditalSection edital={edital} />}
 
       {changes.length > 0 && (
         <div>

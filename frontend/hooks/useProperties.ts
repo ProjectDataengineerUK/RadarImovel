@@ -2,7 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import type { PaginatedResponse, Property, PropertyChange, PropertyFilters } from "@/lib/types";
+import type {
+  PaginatedResponse,
+  Property,
+  PropertyDetailResponse,
+  PropertyFilters,
+} from "@/lib/types";
 
 export function useProperties(filters: PropertyFilters = {}, page = 0, limit = 50) {
   const params = {
@@ -19,7 +24,7 @@ export function useProperties(filters: PropertyFilters = {}, page = 0, limit = 5
 }
 
 export function useProperty(id: string) {
-  return useQuery<{ property: Property; changes: PropertyChange[] }>({
+  return useQuery<PropertyDetailResponse>({
     queryKey: ["property", id],
     queryFn: () => api.get(`/properties/${id}`).then((r) => r.data),
     enabled: !!id,

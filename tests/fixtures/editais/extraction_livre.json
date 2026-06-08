@@ -1,0 +1,17 @@
+{
+  "edital_number": "0001234-2026",
+  "auction_date_1st": "2026-07-03",
+  "auction_date_2nd": "2026-07-18",
+  "minimum_bid_1st": 120000.00,
+  "minimum_bid_2nd": 110000.00,
+  "appraisal_value": 200000.00,
+  "payment_modalities": ["vista", "financiamento_caixa", "fgts"],
+  "occupancy_detail": "livre",
+  "encumbrances": [],
+  "total_debt_estimate": 0,
+  "registration_number": "12345",
+  "auctioneer_name": "João da Silva Leiloeiro Oficial",
+  "risk_flags": [],
+  "risk_level": "low",
+  "extraction_confidence": 0.9
+}
