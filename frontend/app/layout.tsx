@@ -1,8 +1,11 @@
 "use client";
 
+import { Inter } from "next/font/google";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import "./globals.css";
@@ -136,8 +139,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const showSidebar = mounted && !isAuthRoute && pathname !== "/";
 
   return (
-    <html lang="pt-BR" className="dark">
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
+    <html lang="pt-BR" className={`dark ${inter.className}`}>
+      <body className="bg-gray-950 text-gray-100 min-h-screen antialiased">
         <QueryClientProvider client={queryClient}>
           <div className="flex min-h-screen">
             {showSidebar && <Sidebar />}
