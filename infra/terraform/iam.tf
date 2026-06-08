@@ -104,9 +104,15 @@ resource "google_project_iam_member" "gh_run_developer" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Needed to deploy Cloud Run with a specific service account
-resource "google_project_iam_member" "gh_sa_user" {
-  project = var.project_id
-  role    = "roles/iam.serviceAccountUser"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+# Needed to deploy Cloud Run services/jobs that run as specific SAs
+resource "google_service_account_iam_member" "gh_actas_api_sa" {
+  service_account_id = google_service_account.api_sa.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_service_account_iam_member" "gh_actas_job_sa" {
+  service_account_id = google_service_account.job_sa.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
 }
