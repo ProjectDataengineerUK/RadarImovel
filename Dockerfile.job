@@ -14,5 +14,7 @@ RUN pip install --no-cache-dir .[job]
 
 COPY app/ app/
 COPY jobs/ jobs/
+COPY migrations/ migrations/
+COPY alembic.ini .
 
 ENV PYTHONUNBUFFERED=1
