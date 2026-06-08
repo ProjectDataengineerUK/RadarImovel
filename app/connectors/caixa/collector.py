@@ -1,7 +1,7 @@
-import tempfile
 import time
 from collections.abc import Iterator
-from pathlib import Path
+
+import httpx
 
 from app.connectors.base import BankConnector, RawProperty
 from app.connectors.caixa.normalizer import CaixaNormalizer
@@ -18,23 +18,24 @@ CAIXA_UFS = [
 CAIXA_LIST_URL = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{uf}.csv"
 CAIXA_HOME_URL = "https://venda-imoveis.caixa.gov.br/"
 
-# Injected in every new Playwright page to hide automation fingerprints
+_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/125.0.0.0 Safari/537.36"
+)
+
+# Patches injected before every page load to hide Playwright fingerprints
 _STEALTH_SCRIPT = """
 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
-Object.defineProperty(navigator, 'languages', {get: () => ['pt-BR', 'pt', 'en-US']});
+Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
+Object.defineProperty(navigator, 'languages', {get: () => ['pt-BR','pt','en-US']});
 window.chrome = {runtime: {}};
+const origQuery = window.navigator.permissions.query;
+window.navigator.permissions.query = (params) =>
+    params.name === 'notifications'
+        ? Promise.resolve({state: Notification.permission})
+        : origQuery(params);
 """
-
-_BROWSER_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/125.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-}
 
 
 class CaixaConnector(BankConnector):
@@ -51,14 +52,20 @@ class CaixaConnector(BankConnector):
         return [CAIXA_LIST_URL.format(uf=uf) for uf in ufs]
 
     def fetch_raw(self, source_url: str) -> bytes:
-        raw = self._try_playwright(source_url)
+        raw = self._fetch_with_playwright_cookies(source_url)
         if not raw:
             logger.error("caixa.fetch_failed", url=source_url)
         return raw
 
-    def _try_playwright(self, url: str) -> bytes:
+    def _fetch_with_playwright_cookies(self, csv_url: str) -> bytes:
+        """
+        1. Playwright visita a home da Caixa → resolve o challenge Radware (JS).
+        2. Extrai os cookies validados do contexto do browser.
+        3. httpx faz o GET do CSV usando esses cookies — mesmo request que o browser faria.
+        Essa abordagem é mais confiável que expect_download porque não depende de
+        dialog de download e separa o challenge da transferência de bytes.
+        """
         try:
-            from playwright.sync_api import TimeoutError as PWTimeout
             from playwright.sync_api import sync_playwright
         except ImportError:
             logger.error("caixa.playwright_not_installed")
@@ -72,49 +79,60 @@ class CaixaConnector(BankConnector):
                         "--disable-blink-features=AutomationControlled",
                         "--no-sandbox",
                         "--disable-dev-shm-usage",
+                        "--disable-setuid-sandbox",
                     ],
                 )
                 context = browser.new_context(
-                    user_agent=_BROWSER_HEADERS["User-Agent"],
+                    user_agent=_UA,
                     locale="pt-BR",
-                    extra_http_headers={
-                        "Accept-Language": _BROWSER_HEADERS["Accept-Language"],
-                    },
+                    viewport={"width": 1280, "height": 800},
+                    extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8"},
                 )
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
 
-                # Visitar a home primeiro para resolver o challenge Radware Bot Manager
-                logger.info("caixa.playwright_home")
-                page.goto(CAIXA_HOME_URL, wait_until="networkidle", timeout=30_000)
-                time.sleep(2)
+                # Visitar home para resolver o challenge Radware
+                logger.info("caixa.playwright_challenge_start")
+                page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=45_000)
+                # Simular comportamento humano mínimo
+                page.mouse.move(400, 300)
+                page.mouse.move(600, 400)
+                page.evaluate("window.scrollBy(0, 200)")
+                time.sleep(3)
 
-                # Baixar o CSV via expect_download
-                logger.info("caixa.playwright_download", url=url)
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    context.set_default_timeout(60_000)
-                    with page.expect_download(timeout=60_000) as dl_info:
-                        page.goto(url)
-                    dl = dl_info.value
-                    dest = Path(tmpdir) / "lista.csv"
-                    dl.save_as(str(dest))
-                    content = dest.read_bytes()
-
+                # Extrair cookies resolvidos
+                cookies = context.cookies()
                 browser.close()
 
-                # Se recebemos HTML em vez de CSV, a proteção bloqueou
-                if content[:5] in (b"<html", b"<!DOC", b"<HEAD", b"<head"):
-                    logger.warning("caixa.playwright_got_html", url=url, size=len(content))
-                    return b""
+            if not cookies:
+                logger.warning("caixa.playwright_no_cookies")
+                return b""
 
-                logger.info("caixa.playwright_ok", url=url, size=len(content))
-                return content
+            # Converter para dict httpx
+            cookie_header = "; ".join(f"{c['name']}={c['value']}" for c in cookies)
+            logger.info("caixa.playwright_cookies_ok", count=len(cookies))
 
-        except PWTimeout:
-            logger.warning("caixa.playwright_timeout", url=url)
-            return b""
+            # Baixar CSV com os cookies validados
+            headers = {
+                "User-Agent": _UA,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+                "Referer": CAIXA_HOME_URL,
+                "Cookie": cookie_header,
+            }
+            resp = httpx.get(csv_url, headers=headers, timeout=60, follow_redirects=True)
+            resp.raise_for_status()
+
+            content = resp.content
+            if content[:5].lower() in (b"<html", b"<!doc"):
+                logger.warning("caixa.got_html_after_challenge", url=csv_url, size=len(content))
+                return b""
+
+            logger.info("caixa.fetch_ok", url=csv_url, size=len(content))
+            return content
+
         except Exception as exc:
-            logger.error("caixa.playwright_failed", url=url, error=str(exc))
+            logger.error("caixa.fetch_error", url=csv_url, error=str(exc))
             return b""
 
     def parse(self, raw_bytes: bytes, source_url: str) -> Iterator[RawProperty]:
