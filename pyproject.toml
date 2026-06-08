@@ -37,6 +37,7 @@ job = [
     "google-cloud-storage>=2.16",
     "google-cloud-pubsub>=2.21",
     "google-cloud-aiplatform>=1.60",
+    "playwright>=1.44",
     "pg8000>=1.31",
     "cloud-sql-python-connector[pg8000]>=1.9",
     "firebase-admin>=6.5",

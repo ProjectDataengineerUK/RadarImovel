@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
-RUN pip install --no-cache-dir .[job]
+RUN pip install --no-cache-dir ".[job]"
 
-# Playwright chromium (fallback — baixado sob demanda, não pré-instalado para manter imagem menor)
-# RUN playwright install chromium --with-deps
+# Playwright + Chromium para bypass do Radware Bot Manager no portal Caixa
+RUN playwright install chromium --with-deps
 
 COPY app/ app/
 COPY jobs/ jobs/
