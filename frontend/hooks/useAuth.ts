@@ -4,11 +4,15 @@ import { useState, useEffect } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
   User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+
+const googleProvider = new GoogleAuthProvider();
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -42,7 +46,9 @@ export function useAuth() {
   const register = (email: string, password: string) =>
     createUserWithEmailAndPassword(auth!, email, password);
 
+  const loginWithGoogle = () => signInWithPopup(auth!, googleProvider);
+
   const logout = () => signOut(auth!);
 
-  return { user, loading, login, register, logout };
+  return { user, loading, login, register, loginWithGoogle, logout };
 }
