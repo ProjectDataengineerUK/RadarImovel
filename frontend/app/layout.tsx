@@ -6,6 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import "./globals.css";
 
+const AUTH_ROUTES = ["/login", "/register"];
+
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/imoveis", label: "Imóveis" },
@@ -46,13 +48,15 @@ function Sidebar() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
+  const pathname = usePathname();
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname?.startsWith(r));
 
   return (
     <html lang="pt-BR" className="dark">
       <body className="bg-gray-950 text-gray-100 min-h-screen">
         <QueryClientProvider client={queryClient}>
           <div className="flex min-h-screen">
-            <Sidebar />
+            {!isAuthRoute && <Sidebar />}
             <main className="flex-1 overflow-auto">{children}</main>
           </div>
         </QueryClientProvider>
