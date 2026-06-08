@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     score_discount_max_points: int = 60
     score_occupancy_bonus: int = 40
     telegram_token_ttl_seconds: int = 900
-    api_cors_origins: str = "https://radarimovel.com.br"
+    api_cors_origins: str = "https://radarimovel.com.br,https://radar-imovel-frontend-ebtyy3lmba-uc.a.run.app,http://localhost:3000"
     redis_url: str = "redis://localhost:6379"
 
     @property
