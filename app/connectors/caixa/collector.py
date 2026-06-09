@@ -114,21 +114,18 @@ class CaixaConnector(BankConnector):
             logger.error("caixa.playwright_not_installed")
             return None
 
-        captured: dict[str, bytes] = {}
         done = threading.Event()
+        csv_response: list = []  # [Response] — preenchido pelo handler
 
         def handle_response(response):
-            if "venda-imoveis.caixa" in response.url or "Lista_imoveis_" in response.url:
+            if "venda-imoveis.caixa" in response.url:
                 logger.info("caixa.playwright_response", url=response.url[:80], status=response.status)
             if "Lista_imoveis_" in response.url and response.ok:
-                try:
-                    body = response.body()
-                    logger.info("caixa.playwright_body_ok", url=response.url[:80], size=len(body))
-                    if body:
-                        captured["body"] = body
-                        done.set()
-                except Exception as exc:
-                    logger.error("caixa.playwright_body_error", url=response.url[:80], error=str(exc)[:100])
+                # Guarda apenas o objeto Response; body() é chamado fora do handler
+                # para não bloquear o event thread do Playwright (evita Route.fetch Timeout
+                # quando browser.close() é chamado com body() ainda pendente).
+                csv_response.append(response)
+                done.set()
 
         try:
             with sync_playwright() as p:
@@ -168,11 +165,21 @@ class CaixaConnector(BankConnector):
                 except Exception as exc:
                     logger.info("caixa.playwright_goto_exception", error=str(exc)[:120])
 
-                # Aguarda body completo — done.set() é chamado quando response.body() retorna
-                acquired = done.wait(timeout=90)
-                logger.info("caixa.playwright_wait_done", acquired=acquired, captured=bool(captured.get("body")))
+                # Aguarda response event (commit já garante que o evento disparou)
+                acquired = done.wait(timeout=10)
+                logger.info("caixa.playwright_wait_done", acquired=acquired, has_response=bool(csv_response))
+
+                # Lê o body no thread principal, ANTES de fechar o browser
+                body = None
+                if csv_response:
+                    try:
+                        body = csv_response[0].body()
+                        logger.info("caixa.playwright_body_ok", size=len(body))
+                    except Exception as exc:
+                        logger.error("caixa.playwright_body_error", error=str(exc)[:100])
+
                 browser.close()
-                return captured.get("body")
+                return body
 
         except Exception as exc:
             logger.error("caixa.fetch_error", url=csv_url, error=str(exc))
