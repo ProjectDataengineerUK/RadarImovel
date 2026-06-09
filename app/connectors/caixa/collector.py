@@ -113,7 +113,7 @@ class CaixaConnector(BankConnector):
         captured: dict[str, bytes] = {}
 
         def handle_route(route):
-            resp = route.fetch()
+            resp = route.fetch(timeout=120_000)
             captured["body"] = resp.body()
             route.fulfill(response=resp)
 
