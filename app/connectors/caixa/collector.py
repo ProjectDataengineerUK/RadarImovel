@@ -1,3 +1,4 @@
+import sys
 import time
 from collections.abc import Iterator
 
@@ -24,7 +25,6 @@ _UA = (
     "Chrome/125.0.0.0 Safari/537.36"
 )
 
-# Patches injected before every page load to hide Playwright fingerprints
 _STEALTH_SCRIPT = """
 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
 Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
@@ -36,6 +36,22 @@ window.navigator.permissions.query = (params) =>
         ? Promise.resolve({state: Notification.permission})
         : origQuery(params);
 """
+
+_IS_TTY = sys.stdout.isatty()
+_CHUNK_SIZE = 65_536  # 64 KB
+
+
+def _fmt_bytes(n: int) -> str:
+    if n >= 1_048_576:
+        return f"{n / 1_048_576:.1f} MB"
+    if n >= 1_024:
+        return f"{n / 1_024:.1f} KB"
+    return f"{n} B"
+
+
+def _render_bar(pct: float, width: int = 30) -> str:
+    filled = int(width * pct / 100)
+    return "█" * filled + "░" * (width - filled)
 
 
 class CaixaConnector(BankConnector):
@@ -61,9 +77,7 @@ class CaixaConnector(BankConnector):
         """
         1. Playwright visita a home da Caixa → resolve o challenge Radware (JS).
         2. Extrai os cookies validados do contexto do browser.
-        3. httpx faz o GET do CSV usando esses cookies — mesmo request que o browser faria.
-        Essa abordagem é mais confiável que expect_download porque não depende de
-        dialog de download e separa o challenge da transferência de bytes.
+        3. httpx streaming baixa o CSV com progresso visível no terminal.
         """
         try:
             from playwright.sync_api import sync_playwright
@@ -91,16 +105,13 @@ class CaixaConnector(BankConnector):
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
 
-                # Visitar home para resolver o challenge Radware
                 logger.info("caixa.playwright_challenge_start")
                 page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=45_000)
-                # Simular comportamento humano mínimo
                 page.mouse.move(400, 300)
                 page.mouse.move(600, 400)
                 page.evaluate("window.scrollBy(0, 200)")
                 time.sleep(3)
 
-                # Extrair cookies resolvidos
                 cookies = context.cookies()
                 browser.close()
 
@@ -108,32 +119,100 @@ class CaixaConnector(BankConnector):
                 logger.warning("caixa.playwright_no_cookies")
                 return b""
 
-            # Converter para dict httpx
             cookie_header = "; ".join(f"{c['name']}={c['value']}" for c in cookies)
             logger.info("caixa.playwright_cookies_ok", count=len(cookies))
 
-            # Baixar CSV com os cookies validados
-            headers = {
-                "User-Agent": _UA,
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-                "Referer": CAIXA_HOME_URL,
-                "Cookie": cookie_header,
-            }
-            resp = httpx.get(csv_url, headers=headers, timeout=60, follow_redirects=True)
-            resp.raise_for_status()
-
-            content = resp.content
-            if content[:5].lower() in (b"<html", b"<!doc"):
-                logger.warning("caixa.got_html_after_challenge", url=csv_url, size=len(content))
-                return b""
-
-            logger.info("caixa.fetch_ok", url=csv_url, size=len(content))
-            return content
+            return self._stream_download(csv_url, cookie_header)
 
         except Exception as exc:
             logger.error("caixa.fetch_error", url=csv_url, error=str(exc))
             return b""
+
+    def _stream_download(self, url: str, cookie_header: str) -> bytes:
+        headers = {
+            "User-Agent": _UA,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+            "Referer": CAIXA_HOME_URL,
+            "Cookie": cookie_header,
+        }
+        uf = url.split("_")[-1].replace(".csv", "")
+        chunks: list[bytes] = []
+        downloaded = 0
+        total = 0
+        start = time.time()
+        last_logged_pct = -1
+
+        with httpx.stream("GET", url, headers=headers, timeout=120, follow_redirects=True) as resp:
+            resp.raise_for_status()
+            total = int(resp.headers.get("content-length", 0))
+
+            if _IS_TTY:
+                label = f"  Baixando CSV {uf}"
+                sys.stdout.write(f"{label}  [{'░' * 30}]   0%   0 B\r")
+                sys.stdout.flush()
+
+            for chunk in resp.iter_bytes(chunk_size=_CHUNK_SIZE):
+                chunks.append(chunk)
+                downloaded += len(chunk)
+                elapsed = time.time() - start
+
+                if _IS_TTY:
+                    if total:
+                        pct = downloaded / total * 100
+                        bar = _render_bar(pct)
+                        speed = downloaded / elapsed if elapsed > 0 else 0
+                        sys.stdout.write(
+                            f"  Baixando CSV {uf}  [{bar}] {pct:3.0f}%"
+                            f"  {_fmt_bytes(downloaded)} / {_fmt_bytes(total)}"
+                            f"  {_fmt_bytes(int(speed))}/s\r"
+                        )
+                    else:
+                        sys.stdout.write(
+                            f"  Baixando CSV {uf}  {_fmt_bytes(downloaded)} baixados...\r"
+                        )
+                    sys.stdout.flush()
+                else:
+                    # Cloud Run: log a cada 25%
+                    if total:
+                        pct = int(downloaded / total * 100)
+                        milestone = (pct // 25) * 25
+                        if milestone > last_logged_pct:
+                            last_logged_pct = milestone
+                            logger.info(
+                                "caixa.download_progress",
+                                uf=uf,
+                                pct=milestone,
+                                downloaded=_fmt_bytes(downloaded),
+                                total=_fmt_bytes(total),
+                            )
+
+        elapsed = time.time() - start
+        content = b"".join(chunks)
+
+        if _IS_TTY:
+            # Limpar a linha e imprimir resultado final
+            sys.stdout.write(" " * 90 + "\r")
+            total_label = f"/ {_fmt_bytes(total)}" if total else ""
+            speed = downloaded / elapsed if elapsed > 0 else 0
+            print(
+                f"  ✓ CSV {uf}  [{_render_bar(100)}] 100%"
+                f"  {_fmt_bytes(downloaded)} {total_label}"
+                f"  ({elapsed:.1f}s, {_fmt_bytes(int(speed))}/s)"
+            )
+
+        if content[:5].lower() in (b"<html", b"<!doc"):
+            logger.warning("caixa.got_html_after_challenge", url=url, size=len(content))
+            return b""
+
+        logger.info(
+            "caixa.fetch_ok",
+            uf=uf,
+            bytes=downloaded,
+            size=_fmt_bytes(downloaded),
+            elapsed_s=round(elapsed, 1),
+        )
+        return content
 
     def parse(self, raw_bytes: bytes, source_url: str) -> Iterator[RawProperty]:
         uf = source_url.split("_")[-1].replace(".csv", "").replace(".xlsx", "")
