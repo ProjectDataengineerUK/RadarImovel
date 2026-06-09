@@ -6,15 +6,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev gcc wget \
     && rm -rf /var/lib/apt/lists/*
 
+# Copiar código antes do pip install para que o pacote app/ seja instalado
 COPY pyproject.toml .
-RUN pip install --no-cache-dir ".[job]"
-
-# Playwright + Chromium para bypass do Radware Bot Manager no portal Caixa
-RUN playwright install chromium --with-deps
-
 COPY app/ app/
 COPY jobs/ jobs/
 COPY migrations/ migrations/
 COPY alembic.ini .
 
+RUN pip install --no-cache-dir -e ".[job]"
+
+# Playwright + Chromium para bypass do Radware Bot Manager no portal Caixa
+RUN playwright install chromium --with-deps
+
 ENV PYTHONUNBUFFERED=1
+# Garante que /app esteja no path mesmo ao rodar python diretamente
+ENV PYTHONPATH=/app
