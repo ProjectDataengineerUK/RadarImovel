@@ -67,11 +67,41 @@ class CaixaConnector(BankConnector):
 
     def _fetch_with_playwright_cookies(self, csv_url: str) -> bytes:
         """
-        Playwright end-to-end via navegação real do browser:
-        1. Visita home da Caixa → resolve challenge Radware (cookies de sessão válidos).
-        2. Navega para o CSV URL → browser envia cookies + TLS Chrome real.
-        3. Captura o download via page.expect_download (Content-Disposition: attachment).
-        Radware bloqueia fetch()/XHR mas permite navegação direta do browser.
+        Roda o Playwright em thread separada para evitar conflito com asyncio.
+        expect_download usa asyncio internamente — falha se já há um loop rodando.
+        """
+        import concurrent.futures
+
+        uf = csv_url.split("_")[-1].replace(".csv", "")
+        start = time.time()
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(self._playwright_download_in_thread, csv_url)
+            try:
+                content = future.result(timeout=200)
+            except Exception as exc:
+                logger.error("caixa.fetch_error", url=csv_url, error=str(exc))
+                return b""
+
+        if content is None:
+            return b""
+
+        if content[:20].lstrip().lower().startswith(b"<"):
+            logger.warning("caixa.got_html_after_challenge", url=csv_url, size=len(content))
+            return b""
+
+        elapsed = time.time() - start
+        size = len(content)
+        if _IS_TTY:
+            speed = size / elapsed if elapsed > 0 else 0
+            print(f"  ✓ CSV {uf}  {_fmt_bytes(size)}  ({elapsed:.1f}s, {_fmt_bytes(int(speed))}/s)")
+        logger.info("caixa.fetch_ok", uf=uf, bytes=size, size=_fmt_bytes(size), elapsed_s=round(elapsed, 1))
+        return content
+
+    def _playwright_download_in_thread(self, csv_url: str) -> bytes | None:
+        """
+        Executa em thread própria (sem asyncio) → sync_playwright + expect_download funcionam.
+        Fluxo: home → challenge Radware → cookies → goto(csv_url) → download.
         """
         import pathlib
 
@@ -79,10 +109,7 @@ class CaixaConnector(BankConnector):
             from playwright.sync_api import sync_playwright
         except ImportError:
             logger.error("caixa.playwright_not_installed")
-            return b""
-
-        uf = csv_url.split("_")[-1].replace(".csv", "")
-        start = time.time()
+            return None
 
         try:
             with sync_playwright() as p:
@@ -105,7 +132,6 @@ class CaixaConnector(BankConnector):
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
 
-                # Passo 1: resolver o challenge Radware na home page
                 logger.info("caixa.playwright_challenge_start")
                 page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=45_000)
                 page.mouse.move(400, 300)
@@ -116,34 +142,16 @@ class CaixaConnector(BankConnector):
                 cookies = context.cookies()
                 logger.info("caixa.playwright_cookies_ok", count=len(cookies))
 
-                # Passo 2: navegar para o CSV URL — browser usa cookies + TLS Chrome
-                # CSV tem Content-Disposition: attachment → capturar como download
                 with page.expect_download(timeout=120_000) as dl_info:
                     page.goto(csv_url, wait_until="commit", timeout=120_000)
 
-                download = dl_info.value
-                dl_path = pathlib.Path(download.path())
-                content = dl_path.read_bytes()
+                content = pathlib.Path(dl_info.value.path()).read_bytes()
                 browser.close()
+                return content
 
         except Exception as exc:
             logger.error("caixa.fetch_error", url=csv_url, error=str(exc))
-            return b""
-
-        # Se recebeu HTML (challenge page ou erro), rejeitar
-        if content[:20].lstrip().lower().startswith(b"<"):
-            logger.warning("caixa.got_html_after_challenge", url=csv_url, size=len(content))
-            return b""
-
-        elapsed = time.time() - start
-        size = len(content)
-
-        if _IS_TTY:
-            speed = size / elapsed if elapsed > 0 else 0
-            print(f"  ✓ CSV {uf}  {_fmt_bytes(size)}  ({elapsed:.1f}s, {_fmt_bytes(int(speed))}/s)")
-
-        logger.info("caixa.fetch_ok", uf=uf, bytes=size, size=_fmt_bytes(size), elapsed_s=round(elapsed, 1))
-        return content
+            return None
 
     def parse(self, raw_bytes: bytes, source_url: str) -> Iterator[RawProperty]:
         uf = source_url.split("_")[-1].replace(".csv", "").replace(".xlsx", "")
