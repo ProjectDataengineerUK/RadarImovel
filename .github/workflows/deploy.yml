@@ -15,7 +15,7 @@ env:
   DB_USER: radar_app
   DB_NAME: radar
   # Filled by terraform output api_url after first apply
-  API_URL: https://radar-imovel-api-ebtyy3lmba-uc.a.run.app
+  API_URL: https://radar-imovel-api-967459289585.us-central1.run.app
   # Service accounts provisioned by Terraform (iam.tf)
   WIF_PROVIDER: projects/967459289585/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: github-actions@radarimovel.iam.gserviceaccount.com

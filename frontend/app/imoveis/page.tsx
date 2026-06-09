@@ -9,7 +9,7 @@ import type { PropertyFilters as Filters } from "@/lib/types";
 
 const STATES = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
 const TYPES = ["Apartamento","Casa","Terreno","Comercial","Rural","Outros"];
-const MODALITIES = ["Licitação Aberta","Leilão","Venda Direta"];
+const MODALITIES = ["Venda Online","Venda Direta Online","Licitação Aberta","Leilão SFI","Leilão SFH"];
 
 export default function ImoveisPage() {
   const [filters, setFilters] = useState<Filters>({});
@@ -88,7 +88,7 @@ export default function ImoveisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Tipo de imóvel</label>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Modalidade</label>
               <select
                 className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                 onChange={(e) => set("sale_modality", e.target.value)}

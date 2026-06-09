@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     score_risk_flag_penalty_max: int = 20
     score_onus_penalty: int = 15
     telegram_token_ttl_seconds: int = 900
-    api_cors_origins: str = "https://radarimovel.com.br,https://radar-imovel-frontend-ebtyy3lmba-uc.a.run.app,http://localhost:3000"
+    api_cors_origins: str = "https://radarimovel.com.br,https://radar-imovel-frontend-967459289585.us-central1.run.app,https://radar-imovel-frontend-ebtyy3lmba-uc.a.run.app,http://localhost:3000"
     redis_url: str = "redis://localhost:6379"
 
     @property
