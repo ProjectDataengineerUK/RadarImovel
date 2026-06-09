@@ -114,6 +114,7 @@ def run(bank: str, uf: str | None = None, fetch_detail: bool = True) -> None:
                                 normalized = detail_scraper.enrich(
                                     normalized, normalized["official_url"]
                                 )
+                            normalized.pop("bank_code", None)
                             prop = Property(bank_id=bank_row.id, **normalized)
                             session.add(prop)
                             session.flush()

@@ -75,6 +75,7 @@ def run(uf: str, fetch_detail: bool = True) -> None:
                         if existing is None:
                             if detail_scraper and normalized.get("official_url"):
                                 normalized = detail_scraper.enrich(normalized, normalized["official_url"])
+                            normalized.pop("bank_code", None)
                             prop = Property(bank_id=bank.id, **normalized)
                             session.add(prop)
                             session.flush()
