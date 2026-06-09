@@ -104,7 +104,10 @@ class CaixaConnector(BankConnector):
         route.fetch() usa HTTP client próprio do Playwright (TLS diferente do Chrome),
         que é bloqueado pelo Radware. page.on("response") captura a resposta do
         Chromium que passa pelo TLS stack do Chrome — bypass correto do Radware.
+        threading.Event garante que browser.close() só ocorre após body completo.
         """
+        import threading
+
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
@@ -112,6 +115,7 @@ class CaixaConnector(BankConnector):
             return None
 
         captured: dict[str, bytes] = {}
+        done = threading.Event()
 
         def handle_response(response):
             if "Lista_imoveis_" in response.url and response.ok:
@@ -119,6 +123,7 @@ class CaixaConnector(BankConnector):
                     body = response.body()
                     if body:
                         captured["body"] = body
+                        done.set()
                 except Exception:
                     pass
 
@@ -157,10 +162,10 @@ class CaixaConnector(BankConnector):
                 try:
                     page.goto(csv_url, wait_until="commit", timeout=120_000)
                 except Exception:
-                    pass  # esperado: download é bloqueado pelo Chrome (accept_downloads=False)
+                    pass  # esperado: Chrome processa o download antes de "commit"
 
-                # Aguarda o response body estar disponível
-                time.sleep(2)
+                # Aguarda body completo (response.body() é bloqueante mas o evento confirma)
+                done.wait(timeout=90)
                 browser.close()
                 return captured.get("body")
 
