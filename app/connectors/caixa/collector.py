@@ -138,7 +138,7 @@ class CaixaConnector(BankConnector):
                     locale="pt-BR",
                     viewport={"width": 1280, "height": 800},
                     extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8"},
-                    accept_downloads=False,
+                    accept_downloads=True,
                 )
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
