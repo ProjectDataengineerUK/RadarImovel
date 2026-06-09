@@ -67,12 +67,14 @@ class CaixaConnector(BankConnector):
 
     def _fetch_with_playwright_cookies(self, csv_url: str) -> bytes:
         """
-        Playwright end-to-end usando JS fetch interno ao Chromium:
-        1. Visita a home da Caixa → resolve o challenge Radware (JS).
-        2. Baixa o CSV via page.evaluate(fetch()) — garante TLS JA3/JA4 do Chrome.
-        context.request usa HTTP client próprio do Playwright (TLS diferente do Chrome),
-        então usamos fetch() dentro do browser para garantir o mesmo fingerprint.
+        Playwright end-to-end via navegação real do browser:
+        1. Visita home da Caixa → resolve challenge Radware (cookies de sessão válidos).
+        2. Navega para o CSV URL → browser envia cookies + TLS Chrome real.
+        3. Captura o download via page.expect_download (Content-Disposition: attachment).
+        Radware bloqueia fetch()/XHR mas permite navegação direta do browser.
         """
+        import pathlib
+
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
@@ -98,10 +100,12 @@ class CaixaConnector(BankConnector):
                     locale="pt-BR",
                     viewport={"width": 1280, "height": 800},
                     extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8"},
+                    accept_downloads=True,
                 )
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
 
+                # Passo 1: resolver o challenge Radware na home page
                 logger.info("caixa.playwright_challenge_start")
                 page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=45_000)
                 page.mouse.move(400, 300)
@@ -112,38 +116,19 @@ class CaixaConnector(BankConnector):
                 cookies = context.cookies()
                 logger.info("caixa.playwright_cookies_ok", count=len(cookies))
 
-                # fetch() dentro do Chromium → mesmo TLS JA3/JA4 que o browser
-                # Retorna base64 para transferência binária segura via CDP
-                b64 = page.evaluate(
-                    """
-                    async ([url, referer]) => {
-                        const resp = await fetch(url, {
-                            credentials: 'include',
-                            headers: {
-                                'Accept': 'text/csv,application/csv,text/plain,*/*',
-                                'Referer': referer,
-                            }
-                        });
-                        const ab = await resp.arrayBuffer();
-                        const bytes = new Uint8Array(ab);
-                        let bin = '';
-                        const chunk = 8192;
-                        for (let i = 0; i < bytes.length; i += chunk) {
-                            bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-                        }
-                        return btoa(bin);
-                    }
-                    """,
-                    [csv_url, CAIXA_HOME_URL],
-                )
+                # Passo 2: navegar para o CSV URL — browser usa cookies + TLS Chrome
+                # CSV tem Content-Disposition: attachment → capturar como download
+                with page.expect_download(timeout=120_000) as dl_info:
+                    page.goto(csv_url, wait_until="commit", timeout=120_000)
+
+                download = dl_info.value
+                dl_path = pathlib.Path(download.path())
+                content = dl_path.read_bytes()
                 browser.close()
 
         except Exception as exc:
             logger.error("caixa.fetch_error", url=csv_url, error=str(exc))
             return b""
-
-        import base64
-        content = base64.b64decode(b64) if b64 else b""
 
         # Se recebeu HTML (challenge page ou erro), rejeitar
         if content[:20].lstrip().lower().startswith(b"<"):
