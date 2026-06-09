@@ -118,14 +118,17 @@ class CaixaConnector(BankConnector):
         done = threading.Event()
 
         def handle_response(response):
+            if "venda-imoveis.caixa" in response.url or "Lista_imoveis_" in response.url:
+                logger.info("caixa.playwright_response", url=response.url[:80], status=response.status)
             if "Lista_imoveis_" in response.url and response.ok:
                 try:
                     body = response.body()
+                    logger.info("caixa.playwright_body_ok", url=response.url[:80], size=len(body))
                     if body:
                         captured["body"] = body
                         done.set()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.error("caixa.playwright_body_error", url=response.url[:80], error=str(exc)[:100])
 
         try:
             with sync_playwright() as p:
@@ -161,11 +164,13 @@ class CaixaConnector(BankConnector):
 
                 try:
                     page.goto(csv_url, wait_until="commit", timeout=120_000)
-                except Exception:
-                    pass  # esperado: Chrome processa o download antes de "commit"
+                    logger.info("caixa.playwright_goto_committed")
+                except Exception as exc:
+                    logger.info("caixa.playwright_goto_exception", error=str(exc)[:120])
 
-                # Aguarda body completo (response.body() é bloqueante mas o evento confirma)
-                done.wait(timeout=90)
+                # Aguarda body completo — done.set() é chamado quando response.body() retorna
+                acquired = done.wait(timeout=90)
+                logger.info("caixa.playwright_wait_done", acquired=acquired, captured=bool(captured.get("body")))
                 browser.close()
                 return captured.get("body")
 
