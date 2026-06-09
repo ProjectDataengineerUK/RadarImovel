@@ -61,6 +61,20 @@ resource "google_project_iam_member" "job_vertex" {
   member  = "serviceAccount:${google_service_account.job_sa.email}"
 }
 
+# ── Cloud Scheduler — executa Cloud Run Jobs via HTTP target ─────────────────
+
+resource "google_service_account" "scheduler_sa" {
+  account_id   = "radar-scheduler"
+  display_name = "Radar Imóvel — Cloud Scheduler"
+}
+
+# run.developer permite executar jobs (run.jobs.run está incluído)
+resource "google_project_iam_member" "scheduler_run_developer" {
+  project = var.project_id
+  role    = "roles/run.developer"
+  member  = "serviceAccount:${google_service_account.scheduler_sa.email}"
+}
+
 # ── GitHub Actions — Workload Identity Federation ────────────────────────────
 
 resource "google_service_account" "github_actions" {

@@ -128,15 +128,11 @@ def run(uf: str, fetch_detail: bool = True) -> None:
 
 
 if __name__ == "__main__":
-    # Deprecado na Fase 3: a coleta da Caixa passa a usar o job genérico
-    # collect_bank com BANK=caixa. Mantido como thin-shim retrocompatível para
-    # não quebrar schedulers existentes; delega à orquestração unificada.
+    # Thin-shim retrocompatível; delega à orquestração unificada collect_bank.
+    # UF é opcional: sem UF o job processa todos os 27 estados em sequência.
     os.environ.setdefault("BANK", "caixa")
     from jobs.collect_bank import run as run_bank
 
-    uf = os.environ.get("UF", "")
-    if not uf:
-        log.error("job.missing_uf")
-        sys.exit(1)
+    uf = os.environ.get("UF", "").strip() or None
     fetch_detail = os.environ.get("FETCH_DETAIL", "true").lower() != "false"
-    run_bank("caixa", uf=uf.upper(), fetch_detail=fetch_detail)
+    run_bank("caixa", uf=uf.upper() if uf else None, fetch_detail=fetch_detail)

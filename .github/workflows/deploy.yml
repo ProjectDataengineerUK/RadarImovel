@@ -150,6 +150,38 @@ jobs:
             && gcloud run jobs update radar-migrate "${JOB_FLAGS[@]}" \
             || gcloud run jobs create radar-migrate "${JOB_FLAGS[@]}" --command="alembic,upgrade,head" --max-retries=0 --task-timeout=300s
 
+      # ── Fase 2: processamento de editais com Gemini ────────────────────────
+
+      - name: Update radar-process-editais image
+        run: |
+          JOB_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,GCS_BUCKET_DOCS=radar-imovel-docs,VERTEX_LOCATION=us-central1,GEMINI_MODEL=gemini-2.0-flash"
+            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
+            --project=${{ env.PROJECT_ID }}
+          )
+          gcloud run jobs describe radar-process-editais --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-process-editais "${JOB_FLAGS[@]}" \
+            || gcloud run jobs create radar-process-editais "${JOB_FLAGS[@]}" --command="python,jobs/process_editais.py" --max-retries=1 --task-timeout=600s
+
+      # ── Fase 3: coleta genérica por banco ──────────────────────────────────
+
+      - name: Update radar-collect-bank image
+        run: |
+          JOB_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,BANK="
+            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
+            --project=${{ env.PROJECT_ID }}
+          )
+          gcloud run jobs describe radar-collect-bank --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-collect-bank "${JOB_FLAGS[@]}" \
+            || gcloud run jobs create radar-collect-bank "${JOB_FLAGS[@]}" --command="python,-m,jobs.collect_bank" --max-retries=1 --task-timeout=3600s
+
       # ── Run migrations ──────────────────────────────────────────────────────
 
       - name: Run database migrations
