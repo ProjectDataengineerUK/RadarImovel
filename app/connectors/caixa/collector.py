@@ -100,32 +100,19 @@ class CaixaConnector(BankConnector):
 
     def _playwright_download_in_thread(self, csv_url: str) -> bytes | None:
         """
-        Usa page.on("response") para capturar a resposta real do Chromium.
-        route.fetch() usa HTTP client próprio do Playwright (TLS diferente do Chrome),
-        que é bloqueado pelo Radware. page.on("response") captura a resposta do
-        Chromium que passa pelo TLS stack do Chrome — bypass correto do Radware.
-        threading.Event garante que browser.close() só ocorre após body completo.
-        """
-        import threading
+        Usa page.expect_download() para capturar o CSV da Caixa.
 
+        page.on("response") + response.body() não funciona para downloads: quando
+        accept_downloads=True o Chrome despacha o arquivo para o download manager e
+        o CDP não consegue mais ler o body via Network.getResponseBody. A única forma
+        correta de ler o conteúdo é via page.expect_download(), que aguarda o Playwright
+        salvar o arquivo em disco e expõe o path para leitura.
+        """
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
             logger.error("caixa.playwright_not_installed")
             return None
-
-        done = threading.Event()
-        csv_response: list = []  # [Response] — preenchido pelo handler
-
-        def handle_response(response):
-            if "venda-imoveis.caixa" in response.url:
-                logger.info("caixa.playwright_response", url=response.url[:80], status=response.status)
-            if "Lista_imoveis_" in response.url and response.ok:
-                # Guarda apenas o objeto Response; body() é chamado fora do handler
-                # para não bloquear o event thread do Playwright (evita Route.fetch Timeout
-                # quando browser.close() é chamado com body() ainda pendente).
-                csv_response.append(response)
-                done.set()
 
         try:
             with sync_playwright() as p:
@@ -147,7 +134,6 @@ class CaixaConnector(BankConnector):
                 )
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
-                page.on("response", handle_response)
 
                 logger.info("caixa.playwright_challenge_start")
                 page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=45_000)
@@ -159,24 +145,27 @@ class CaixaConnector(BankConnector):
                 cookies = context.cookies()
                 logger.info("caixa.playwright_cookies_ok", count=len(cookies))
 
-                try:
-                    page.goto(csv_url, wait_until="commit", timeout=120_000)
-                    logger.info("caixa.playwright_goto_committed")
-                except Exception as exc:
-                    logger.info("caixa.playwright_goto_exception", error=str(exc)[:120])
-
-                # Aguarda response event (commit já garante que o evento disparou)
-                acquired = done.wait(timeout=10)
-                logger.info("caixa.playwright_wait_done", acquired=acquired, has_response=bool(csv_response))
-
-                # Lê o body no thread principal, ANTES de fechar o browser
                 body = None
-                if csv_response:
-                    try:
-                        body = csv_response[0].body()
+                try:
+                    with page.expect_download(timeout=120_000) as dl_info:
+                        try:
+                            page.goto(csv_url, wait_until="commit", timeout=120_000)
+                            logger.info("caixa.playwright_goto_committed")
+                        except Exception as exc:
+                            # "Download is starting" é esperado — não é erro real
+                            logger.info("caixa.playwright_goto_exception", error=str(exc)[:120])
+
+                    download = dl_info.value
+                    path = download.path()
+                    logger.info("caixa.playwright_download_path", path=str(path))
+                    if path:
+                        with open(path, "rb") as f:
+                            body = f.read()
                         logger.info("caixa.playwright_body_ok", size=len(body))
-                    except Exception as exc:
-                        logger.error("caixa.playwright_body_error", error=str(exc)[:100])
+                    else:
+                        logger.error("caixa.playwright_download_no_path")
+                except Exception as exc:
+                    logger.error("caixa.playwright_download_error", error=str(exc)[:120])
 
                 browser.close()
                 return body
