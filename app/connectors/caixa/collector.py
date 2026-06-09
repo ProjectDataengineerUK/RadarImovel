@@ -100,16 +100,22 @@ class CaixaConnector(BankConnector):
 
     def _playwright_download_in_thread(self, csv_url: str) -> bytes | None:
         """
-        Executa em thread própria (sem asyncio) → sync_playwright + expect_download funcionam.
-        Fluxo: home → challenge Radware → cookies → goto(csv_url) → download.
+        Intercepta a resposta do CSV via page.route() — sem expect_download.
+        expect_download chama run_until_complete() em loop já rodando (bug Playwright sync).
+        page.route usa o reactor do Playwright que não tem esse problema.
         """
-        import pathlib
-
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
             logger.error("caixa.playwright_not_installed")
             return None
+
+        captured: dict[str, bytes] = {}
+
+        def handle_route(route):
+            resp = route.fetch()
+            captured["body"] = resp.body()
+            route.fulfill(response=resp)
 
         try:
             with sync_playwright() as p:
@@ -127,7 +133,6 @@ class CaixaConnector(BankConnector):
                     locale="pt-BR",
                     viewport={"width": 1280, "height": 800},
                     extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8"},
-                    accept_downloads=True,
                 )
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
@@ -142,12 +147,15 @@ class CaixaConnector(BankConnector):
                 cookies = context.cookies()
                 logger.info("caixa.playwright_cookies_ok", count=len(cookies))
 
-                with page.expect_download(timeout=120_000) as dl_info:
+                # Interceptar a resposta do CSV antes que o browser processe como download
+                page.route("**/Lista_imoveis_*.csv", handle_route)
+                try:
                     page.goto(csv_url, wait_until="commit", timeout=120_000)
+                except Exception:
+                    pass  # goto pode falhar se a navegação for interrompida pelo download
 
-                content = pathlib.Path(dl_info.value.path()).read_bytes()
                 browser.close()
-                return content
+                return captured.get("body")
 
         except Exception as exc:
             logger.error("caixa.fetch_error", url=csv_url, error=str(exc))
