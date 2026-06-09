@@ -99,8 +99,9 @@ export default function PropertyFiltersComponent({ value, onChange }: PropertyFi
           className="w-full border rounded px-2 py-1.5 text-sm"
         >
           <option value="">Todas</option>
+          <option value="Venda Online">Venda Online</option>
+          <option value="Venda Direta Online">Venda Direta Online</option>
           <option value="Licitação Aberta">Licitação Aberta</option>
-          <option value="Venda Direta">Venda Direta</option>
           <option value="Leilão SFI">Leilão SFI</option>
           <option value="Leilão SFH">Leilão SFH</option>
         </select>
