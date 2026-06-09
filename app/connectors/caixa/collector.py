@@ -100,9 +100,10 @@ class CaixaConnector(BankConnector):
 
     def _playwright_download_in_thread(self, csv_url: str) -> bytes | None:
         """
-        Intercepta a resposta do CSV via page.route() — sem expect_download.
-        expect_download chama run_until_complete() em loop já rodando (bug Playwright sync).
-        page.route usa o reactor do Playwright que não tem esse problema.
+        Usa page.on("response") para capturar a resposta real do Chromium.
+        route.fetch() usa HTTP client próprio do Playwright (TLS diferente do Chrome),
+        que é bloqueado pelo Radware. page.on("response") captura a resposta do
+        Chromium que passa pelo TLS stack do Chrome — bypass correto do Radware.
         """
         try:
             from playwright.sync_api import sync_playwright
@@ -112,10 +113,14 @@ class CaixaConnector(BankConnector):
 
         captured: dict[str, bytes] = {}
 
-        def handle_route(route):
-            resp = route.fetch(timeout=120_000)
-            captured["body"] = resp.body()
-            route.fulfill(response=resp)
+        def handle_response(response):
+            if "Lista_imoveis_" in response.url and response.ok:
+                try:
+                    body = response.body()
+                    if body:
+                        captured["body"] = body
+                except Exception:
+                    pass
 
         try:
             with sync_playwright() as p:
@@ -133,9 +138,11 @@ class CaixaConnector(BankConnector):
                     locale="pt-BR",
                     viewport={"width": 1280, "height": 800},
                     extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8"},
+                    accept_downloads=False,
                 )
                 context.add_init_script(_STEALTH_SCRIPT)
                 page = context.new_page()
+                page.on("response", handle_response)
 
                 logger.info("caixa.playwright_challenge_start")
                 page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=45_000)
@@ -147,13 +154,13 @@ class CaixaConnector(BankConnector):
                 cookies = context.cookies()
                 logger.info("caixa.playwright_cookies_ok", count=len(cookies))
 
-                # Interceptar a resposta do CSV antes que o browser processe como download
-                page.route("**/Lista_imoveis_*.csv", handle_route)
                 try:
                     page.goto(csv_url, wait_until="commit", timeout=120_000)
                 except Exception:
-                    pass  # goto pode falhar se a navegação for interrompida pelo download
+                    pass  # esperado: download é bloqueado pelo Chrome (accept_downloads=False)
 
+                # Aguarda o response body estar disponível
+                time.sleep(2)
                 browser.close()
                 return captured.get("body")
 
