@@ -11,6 +11,14 @@ from app.connectors.normalize_utils import (
 from app.core.logging import logger
 
 
+def _s(val, default: str | None = None) -> str | None:
+    """Converte valor para str, retornando None se for nulo, vazio ou 'nan'."""
+    if val is None:
+        return default
+    s = str(val).strip()
+    return default if (not s or s.lower() == "nan") else s
+
+
 class CaixaNormalizer:
     BANK_CODE = "caixa"
 
@@ -24,22 +32,27 @@ class CaixaNormalizer:
             if discount_percent is None:
                 discount_percent = compute_discount(appraisal_value, current_value)
 
+            official_url = _s(d.get("official_url"))
+            # URL inválida (ex: "nan") vira None para não quebrar o detail scraper
+            if official_url and not official_url.startswith("http"):
+                official_url = None
+
             return {
-                "external_code": str(d.get("external_code", "")).strip(),
+                "external_code": _s(d.get("external_code"), ""),
                 "bank_code": self.BANK_CODE,
-                "title": str(d.get("title", "")).strip() or None,
+                "title": _s(d.get("title")),
                 "property_type": extract_type(d.get("title")),
-                "address": str(d.get("address", "")).strip() or None,
-                "neighborhood": str(d.get("neighborhood", "")).strip() or None,
-                "city": str(d.get("city", "")).strip(),
-                "state": str(d.get("state", "")).strip().upper()[:2],
+                "address": _s(d.get("address")),
+                "neighborhood": _s(d.get("neighborhood")),
+                "city": _s(d.get("city"), ""),
+                "state": _s(d.get("state"), "")[:2].upper(),
                 "appraisal_value": appraisal_value,
                 "minimum_value": current_value or Decimal("0"),
                 "current_value": current_value or Decimal("0"),
                 "discount_percent": discount_percent,
                 "occupancy_status": parse_occupancy(d.get("occupancy_status")),
-                "sale_modality": str(d.get("sale_modality", "Não informado")).strip(),
-                "official_url": str(d.get("official_url", "")).strip(),
+                "sale_modality": _s(d.get("sale_modality"), "Não informado"),
+                "official_url": official_url,
                 "status": "active",
             }
         except Exception as exc:

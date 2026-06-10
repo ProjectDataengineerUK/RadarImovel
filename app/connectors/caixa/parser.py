@@ -44,10 +44,12 @@ class CaixaParser:
             df = df.dropna(subset=["external_code"])
 
             for _, row in df.iterrows():
-                raw_data = row.to_dict()
-                raw_data["state"] = uf  # garante UF correta mesmo se ausente no arquivo
-                external_code = str(raw_data.get("external_code", "")).strip()
-                if not external_code:
+                # Substitui NaN pandas por None para evitar string "nan" no banco
+                raw_data = {k: (None if pd.isna(v) else v) for k, v in row.to_dict().items()}
+                raw_data["state"] = uf
+                external_code = str(raw_data.get("external_code") or "").strip()
+                # Ignora linhas que não são imóveis reais (erros de encoding, cabeçalhos repetidos)
+                if not external_code or not external_code.replace(" ", "").isdigit() or len(external_code) > 50:
                     continue
                 yield RawProperty(
                     external_code=external_code,
