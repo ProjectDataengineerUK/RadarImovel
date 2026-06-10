@@ -7,7 +7,8 @@ from app.models.user import User, Alert
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
 
-@router.get("")
+@router.get("", include_in_schema=True)
+@router.get("/", include_in_schema=False)
 def list_alerts(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),

@@ -18,7 +18,7 @@ export function useProperties(filters: PropertyFilters = {}, page = 0, limit = 5
 
   return useQuery<PaginatedResponse<Property>>({
     queryKey: ["properties", params],
-    queryFn: () => api.get("/properties", { params }).then((r) => r.data),
+    queryFn: () => api.get("/properties/", { params }).then((r) => r.data),
     staleTime: 60_000,
   });
 }
@@ -26,7 +26,7 @@ export function useProperties(filters: PropertyFilters = {}, page = 0, limit = 5
 export function useProperty(id: string) {
   return useQuery<PropertyDetailResponse>({
     queryKey: ["property", id],
-    queryFn: () => api.get(`/properties/${id}`).then((r) => r.data),
+    queryFn: () => api.get(`/properties/${id}/`).then((r) => r.data),
     enabled: !!id,
   });
 }

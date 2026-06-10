@@ -18,7 +18,8 @@ class WatchlistCreate(BaseModel):
     bank_id: str | None = None
 
 
-@router.get("")
+@router.get("", include_in_schema=True)
+@router.get("/", include_in_schema=False)
 def list_watchlists(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -26,7 +27,8 @@ def list_watchlists(
     return db.query(Watchlist).filter_by(user_id=current_user.id, active=True).all()
 
 
-@router.post("")
+@router.post("", include_in_schema=True)
+@router.post("/", include_in_schema=False)
 def create_watchlist(
     payload: WatchlistCreate,
     current_user: User = Depends(get_current_user),
