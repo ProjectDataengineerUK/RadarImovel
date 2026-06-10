@@ -11,7 +11,7 @@ from app.models.property import Property, PropertyChange
 router = APIRouter(prefix="/properties", tags=["properties"])
 
 
-@router.get("/")
+@router.get("")
 def list_properties(
     state: str | None = Query(None),
     city: str | None = Query(None),
