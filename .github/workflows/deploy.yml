@@ -214,6 +214,23 @@ jobs:
             && gcloud run jobs update radar-enrich-details "${BASE_FLAGS[@]}" \
             || gcloud run jobs create radar-enrich-details "${BASE_FLAGS[@]}"
 
+      - name: Update radar-calculate-risk image
+        run: |
+          BASE_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }}"
+            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
+            --project=${{ env.PROJECT_ID }}
+            --command="python,-m,jobs.calculate_risk"
+            --max-retries=1
+            --task-timeout=600s
+          )
+          gcloud run jobs describe radar-calculate-risk --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-calculate-risk "${BASE_FLAGS[@]}" \
+            || gcloud run jobs create radar-calculate-risk "${BASE_FLAGS[@]}"
+
       # ── Run migrations ──────────────────────────────────────────────────────
 
       - name: Run database migrations
