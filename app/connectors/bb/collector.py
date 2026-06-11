@@ -3,7 +3,6 @@
 Portal de venda de imóveis BB. URL e estrutura HTML são hipóteses a validar no
 build — isoladas nas constantes abaixo. Coleta nacional (sem split por UF).
 """
-import os
 from collections.abc import Iterator
 
 import httpx
@@ -11,11 +10,11 @@ import httpx
 from app.connectors.base import BankConnector, RawProperty
 from app.connectors.bb.normalizer import BBNormalizer
 from app.connectors.bb.parser import BBParser
+from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
 BB_LIST_URLS = [
-    "https://www21.bb.com.br/portalbb/imoveis/buscaImoveis.bb",
-    "https://www47.bb.com.br/portalbb/tabelaVendaImoveis/vendaImoveis,8200,2,0.bbx",
+    "https://www.bb.com.br/site/compras-contratacao-e-venda-de-imoveis/venda-de-imoveis/",
 ]
 
 _HEADERS = {
@@ -70,29 +69,7 @@ class BBConnector(BankConnector):
         return False
 
     def _try_playwright(self, url: str) -> bytes:
-        if os.environ.get("DISABLE_PLAYWRIGHT", "").lower() == "true":
-            return b""
-        try:
-            from playwright.sync_api import sync_playwright
-        except ImportError:
-            logger.error("bb.playwright_not_installed", url=url)
-            return b""
-        try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(
-                    headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"]
-                )
-                page = browser.new_context(
-                    user_agent=_HEADERS["User-Agent"], locale="pt-BR"
-                ).new_page()
-                page.goto(url, wait_until="networkidle", timeout=30_000)
-                content = page.content().encode("utf-8")
-                browser.close()
-                logger.info("bb.playwright_ok", url=url, size=len(content))
-                return content
-        except Exception as exc:
-            logger.error("bb.playwright_failed", url=url, error=str(exc))
-            return b""
+        return fetch_with_playwright(url)
 
     def parse(self, raw_bytes: bytes, source_url: str) -> Iterator[RawProperty]:
         yield from self.parser.parse(raw_bytes, source_url)

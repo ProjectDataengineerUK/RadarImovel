@@ -10,9 +10,10 @@ import httpx
 from app.connectors.banrisul.normalizer import BanrisulNormalizer
 from app.connectors.banrisul.parser import BanrisulParser
 from app.connectors.base import BankConnector, RawProperty
+from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
-BANRISUL_LIST_URL = "https://www.banrisul.com.br/bob/link/bobsl087.aspx"
+BANRISUL_LIST_URL = "https://www.banrisul.com.br/bob/site/link/bens-a-venda.html"
 
 _HEADERS = {
     "User-Agent": (
@@ -37,16 +38,19 @@ class BanrisulConnector(BankConnector):
         return [BANRISUL_LIST_URL]
 
     def fetch_raw(self, source_url: str) -> bytes:
-        try:
-            with httpx.Client(
-                headers=_HEADERS, timeout=30, follow_redirects=True
-            ) as client:
-                resp = client.get(source_url)
-                resp.raise_for_status()
-                content = resp.content
-        except Exception as exc:
-            logger.error("banrisul.fetch_failed", url=source_url, error=str(exc))
-            return b""
+        # SPA page — Playwright renders the JavaScript-loaded property listings
+        content = fetch_with_playwright(source_url)
+        if not content:
+            try:
+                with httpx.Client(
+                    headers=_HEADERS, timeout=30, follow_redirects=True
+                ) as client:
+                    resp = client.get(source_url)
+                    resp.raise_for_status()
+                    content = resp.content
+            except Exception as exc:
+                logger.error("banrisul.fetch_failed", url=source_url, error=str(exc))
+                return b""
 
         head = content[:512].lower()
         if b"captcha" in head or b"challenge" in head:

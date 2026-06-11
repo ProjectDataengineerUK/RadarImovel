@@ -10,10 +10,11 @@ import httpx
 from app.connectors.base import BankConnector, RawProperty
 from app.connectors.brb.normalizer import BRBNormalizer
 from app.connectors.brb.parser import BRBParser
+from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
-BRB_OFICIAL_URL = "https://www.brb.com.br/a-brb/leiloes-e-vendas/imoveis-proprios"
-BRB_RESALE_URL = "https://brb.resale.com.br/"
+# Portal oficial de venda de imóveis BRB (React SPA powered by Resale)
+BRB_PORTAL_URL = "https://feiraobrb.com.br/"
 
 _HEADERS = {
     "User-Agent": (
@@ -35,22 +36,25 @@ class BRBConnector(BankConnector):
         self.normalizer = BRBNormalizer()
 
     def discover_sources(self) -> list[str]:
-        return [BRB_OFICIAL_URL, BRB_RESALE_URL]
+        return [BRB_PORTAL_URL]
 
     def fetch_raw(self, source_url: str) -> bytes:
-        try:
-            with httpx.Client(
-                headers=_HEADERS, timeout=30, follow_redirects=True
-            ) as client:
-                resp = client.get(source_url)
-                resp.raise_for_status()
-                content = resp.content
-        except Exception as exc:
-            logger.error("brb.fetch_failed", url=source_url, error=str(exc))
-            return b""
+        # SPA page — Playwright renders the JavaScript-loaded property listings
+        content = fetch_with_playwright(source_url)
+        if not content:
+            try:
+                with httpx.Client(
+                    headers=_HEADERS, timeout=30, follow_redirects=True
+                ) as client:
+                    resp = client.get(source_url)
+                    resp.raise_for_status()
+                    content = resp.content
+            except Exception as exc:
+                logger.error("brb.fetch_failed", url=source_url, error=str(exc))
+                return b""
 
         head = content[:512].lower()
-        if b"captcha" in head:
+        if b"captcha" in head or b"challenge" in head:
             logger.warning("brb.fetch_got_challenge", url=source_url)
             return b""
         logger.info("brb.fetch_ok", url=source_url, size=len(content))

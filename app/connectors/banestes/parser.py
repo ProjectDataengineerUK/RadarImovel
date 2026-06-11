@@ -13,12 +13,13 @@ from app.core.logging import logger
 
 _COLUMN_ALIASES = {
     "external_code": ("item", "lote", "nº", "no", "código", "codigo"),
-    "title": ("descrição", "descricao", "imóvel", "imovel", "bem", "tipo"),
+    "title": ("descrição", "descricao", "imóvel", "imovel", "bem", "tipo", "unidade"),
     "address": ("endereço", "endereco", "localização", "localizacao"),
     "city": ("município", "municipio", "cidade", "comarca"),
     "state": ("uf", "estado"),
     "appraisal_value": ("avaliação", "avaliacao"),
     "current_value": ("lance", "valor", "preço", "preco", "mínimo", "minimo"),
+    "occupancy_status": ("situação", "situacao"),
 }
 
 _EDITAL_RE = re.compile(r"edital[\s\w]*?n[ºo°.]?\s*([\w./-]+)", re.IGNORECASE)
@@ -81,11 +82,20 @@ class BanestesParser:
         if not tables:
             logger.warning("banestes.parser.pdf_no_tables", source_url=source_url)
             return
+        current_city: str | None = None
         for idx, record in enumerate(rows_from_tables(tables)):
             try:
+                # Banestes PDFs separate properties by city: a row with exactly one non-empty
+                # cell (the city name) acts as a section header.
+                non_empty = [v for v in record.values() if v.strip()]
+                if len(non_empty) == 1:
+                    current_city = non_empty[0]
+                    continue
                 remapped = _remap(record)
                 if not any(remapped.values()):
                     continue
+                if current_city and not remapped.get("city"):
+                    remapped["city"] = current_city
                 external_code = (remapped.get("external_code") or f"banestes-{idx}").strip()
                 remapped["external_code"] = external_code
                 remapped["edital_number"] = edital_number

@@ -10,9 +10,10 @@ import httpx
 from app.connectors.base import BankConnector, RawProperty
 from app.connectors.bnb.normalizer import BNBNormalizer
 from app.connectors.bnb.parser import BNBParser
+from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
-BNB_LIST_URL = "https://www.bnb.gov.br/bens-em-oferta"
+BNB_LIST_URL = "https://www.bnb.gov.br/acesso-a-informacao/licitacoes-e-contratos/bens-a-venda"
 
 _HEADERS = {
     "User-Agent": (
@@ -37,6 +38,9 @@ class BNBConnector(BankConnector):
         return [BNB_LIST_URL]
 
     def fetch_raw(self, source_url: str) -> bytes:
+        # Try httpx first — handles direct PDF links returned by the Liferay portal
+        content = b""
+        content_type = ""
         try:
             with httpx.Client(
                 headers=_HEADERS, timeout=45, follow_redirects=True
@@ -46,15 +50,19 @@ class BNBConnector(BankConnector):
                 content = resp.content
                 content_type = resp.headers.get("content-type", "")
         except Exception as exc:
-            logger.error("bnb.fetch_failed", url=source_url, error=str(exc))
-            return b""
+            logger.warning("bnb.fetch_http_failed", url=source_url, error=str(exc))
 
         is_pdf = content[:4] == b"%PDF" or "application/pdf" in content_type
-        if not is_pdf and content[:5].lower() in (b"<html", b"<!doc"):
-            head = content[:512].lower()
-            if b"captcha" in head or b"challenge" in head:
-                logger.warning("bnb.fetch_got_challenge", url=source_url)
-                return b""
+        if not is_pdf:
+            # Liferay portal renders content via JS — use Playwright for full render
+            rendered = fetch_with_playwright(source_url)
+            if rendered:
+                content = rendered
+
+        head = content[:512].lower()
+        if b"captcha" in head or b"challenge" in head:
+            logger.warning("bnb.fetch_got_challenge", url=source_url)
+            return b""
         logger.info("bnb.fetch_ok", url=source_url, size=len(content), pdf=is_pdf)
         return content
 

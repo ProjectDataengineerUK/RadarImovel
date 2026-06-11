@@ -14,7 +14,7 @@ from app.connectors.banestes.parser import BanestesParser
 from app.connectors.base import BankConnector, RawProperty
 from app.core.logging import logger
 
-BANESTES_INDEX_URL = "https://www.banestes.com.br/leiloes-e-vendas"
+BANESTES_INDEX_URL = "https://www.banestes.com.br/publicacoes_legais/leilao-bem-imovel.html"
 
 _HEADERS = {
     "User-Agent": (
@@ -44,18 +44,24 @@ class BanestesConnector(BankConnector):
     def _extract_pdf_links(self, raw_bytes: bytes, base_url: str) -> list[str]:
         if not raw_bytes or raw_bytes[:4] == b"%PDF":
             return []
-        try:
-            soup = BeautifulSoup(raw_bytes, "lxml")
-        except Exception as exc:
-            logger.error("banestes.index_soup_failed", error=str(exc))
-            return []
-        links: list[str] = []
-        for a in soup.select("a[href]"):
-            href = str(a.get("href", "")).strip()
-            if re.search(r"\.pdf($|\?)", href, re.IGNORECASE):
-                if not href.startswith("http"):
-                    href = base_url.rsplit("/", 1)[0] + "/" + href.lstrip("/")
-                links.append(href)
+        html = raw_bytes.decode("utf-8", errors="replace")
+        # Real page uses displayWindow('//www.banestes.com.br/...pdf', ...) — not href
+        matches = re.findall(
+            r"displayWindow\('(//www\.banestes\.com\.br/[^']+\.pdf)", html, re.IGNORECASE
+        )
+        links = ["https:" + p for p in matches]
+        if not links:
+            # Fallback: plain <a href> links
+            try:
+                soup = BeautifulSoup(raw_bytes, "lxml")
+                for a in soup.select("a[href]"):
+                    href = str(a.get("href", "")).strip()
+                    if re.search(r"\.pdf($|\?)", href, re.IGNORECASE):
+                        if not href.startswith("http"):
+                            href = base_url.rsplit("/", 1)[0] + "/" + href.lstrip("/")
+                        links.append(href)
+            except Exception as exc:
+                logger.warning("banestes.index_soup_failed", error=str(exc))
         logger.info("banestes.index_pdf_links", count=len(links))
         return links
 

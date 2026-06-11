@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from app.connectors.basa.normalizer import BASANormalizer
 from app.connectors.basa.parser import BASAParser
 from app.connectors.base import BankConnector, RawProperty
+from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
 BASA_INDEX_URL = "https://www.bancoamazonia.com.br/imoveis-e-bens"
@@ -60,22 +61,37 @@ class BASAConnector(BankConnector):
         return links
 
     def fetch_raw(self, source_url: str) -> bytes:
-        try:
-            with httpx.Client(
-                headers=_HEADERS, timeout=45, follow_redirects=True
-            ) as client:
-                resp = client.get(source_url)
-                resp.raise_for_status()
-                content = resp.content
-        except Exception as exc:
-            logger.error("basa.fetch_failed", url=source_url, error=str(exc))
-            return b""
-
-        if content[:4] != b"%PDF" and content[:5].lower() in (b"<html", b"<!doc"):
-            head = content[:512].lower()
-            if b"captcha" in head or b"challenge" in head:
-                logger.warning("basa.fetch_got_challenge", url=source_url)
+        if source_url.lower().endswith(".pdf"):
+            # Direct PDF link — use httpx
+            try:
+                with httpx.Client(
+                    headers=_HEADERS, timeout=45, follow_redirects=True
+                ) as client:
+                    resp = client.get(source_url)
+                    resp.raise_for_status()
+                    content = resp.content
+            except Exception as exc:
+                logger.error("basa.fetch_failed", url=source_url, error=str(exc))
                 return b""
+        else:
+            # SPA (Next.js) — Playwright renders JavaScript-loaded content
+            content = fetch_with_playwright(source_url)
+            if not content:
+                try:
+                    with httpx.Client(
+                        headers=_HEADERS, timeout=45, follow_redirects=True
+                    ) as client:
+                        resp = client.get(source_url)
+                        resp.raise_for_status()
+                        content = resp.content
+                except Exception as exc:
+                    logger.error("basa.fetch_failed", url=source_url, error=str(exc))
+                    return b""
+
+        head = content[:512].lower()
+        if b"captcha" in head or b"challenge" in head:
+            logger.warning("basa.fetch_got_challenge", url=source_url)
+            return b""
         logger.info("basa.fetch_ok", url=source_url, size=len(content))
         return content
 
