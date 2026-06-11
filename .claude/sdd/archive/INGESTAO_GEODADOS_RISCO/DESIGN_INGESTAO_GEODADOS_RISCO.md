@@ -12,7 +12,7 @@
 | **Date** | 2026-06-11 |
 | **Author** | design-agent |
 | **DEFINE** | `.claude/sdd/features/DEFINE_INGESTAO_GEODADOS_RISCO.md` |
-| **Status** | Ready for Build |
+| **Status** | ✅ Shipped |
 
 ---
 

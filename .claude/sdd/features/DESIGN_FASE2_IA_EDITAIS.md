@@ -11,7 +11,7 @@
 | **Author** | design-agent |
 | **DEFINE** | [DEFINE_FASE2_IA_EDITAIS.md](./DEFINE_FASE2_IA_EDITAIS.md) |
 | **BRAINSTORM** | [BRAINSTORM_FASE2_IA_EDITAIS.md](./BRAINSTORM_FASE2_IA_EDITAIS.md) |
-| **Status** | Ready for Build |
+| **Status** | Built / Complete |
 | **Confidence** | 0.92 — abordagem A do brainstorm, stack GCP consolidada na Fase 1, padrão de Cloud Run Job reutilizado |
 
 > **Nota de versionamento de migration:** o DEFINE referencia "migration 002", porém as migrations `002_add_zipcode_photo` e `003_seed_banks` já existem no repositório. A migration desta fase é a **004** (`004_edital_processing.py`). Onde o DEFINE diz "002", leia-se "004".

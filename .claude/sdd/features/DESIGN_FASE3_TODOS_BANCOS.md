@@ -12,7 +12,7 @@
 | **DEFINE** | DEFINE_FASE3_TODOS_BANCOS.md (em geração paralela) |
 | **BRAINSTORM** | BRAINSTORM_FASE3_TODOS_BANCOS.md (em geração paralela) |
 | **Baseia-se em** | [DESIGN_MVP_FASE1_CAIXA.md](./DESIGN_MVP_FASE1_CAIXA.md) |
-| **Status** | Ready for Build |
+| **Status** | Built / Complete |
 
 > **Nota de confiança (design-agent):** confiança 0.85 — padrões do projeto (interface `BankConnector`, pipeline de coleta, infra Terraform) totalmente conhecidos e reaproveitados a partir da Fase 1. As URLs e estruturas HTML/PDF de cada banco são **hipóteses iniciais** a validar no `/build` (cada banco expõe um `discover_sources()` configurável). Onde há incerteza de formato, o design isola a lógica volátil em constantes no topo de cada `collector.py`.
 
