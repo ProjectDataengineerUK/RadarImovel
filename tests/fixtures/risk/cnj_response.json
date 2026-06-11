@@ -1,0 +1,22 @@
+{
+  "hits": {
+    "hits": [
+      {
+        "_source": {
+          "numeroProcesso": "0001234-55.2020.8.26.0100",
+          "classe": {"nome": "Execução Fiscal"},
+          "tribunal": "TJSP",
+          "movimentos": [{"nome": "Distribuição"}]
+        }
+      },
+      {
+        "_source": {
+          "numeroProcesso": "0009876-11.2019.8.26.0100",
+          "classe": {"nome": "Inventário"},
+          "tribunal": "TJSP",
+          "movimentos": [{"nome": "Sentença proferida"}]
+        }
+      }
+    ]
+  }
+}

@@ -41,6 +41,37 @@ class Settings(BaseSettings):
     api_cors_origins: str = "https://radarimovel.com.br,https://radar-imovel-frontend-967459289585.us-central1.run.app,https://radar-imovel-frontend-ebtyy3lmba-uc.a.run.app,http://localhost:3000"
     redis_url: str = "redis://localhost:6379"
 
+    # Risk — Pub/Sub
+    pubsub_topic_risk: str = "risk-events"
+    pubsub_sub_risk: str = "risk-events-sub"
+    pubsub_topic_risk_changes: str = "risk-change-events"
+
+    # Risk — dimension weights
+    risk_weight_juridico: float = 0.30
+    risk_weight_fundiario: float = 0.20
+    risk_weight_fiscal: float = 0.20
+    risk_weight_ocupacao: float = 0.15
+    risk_weight_socioeconomico: float = 0.10
+    risk_weight_mercado: float = 0.05
+
+    # Risk — alert threshold
+    risk_score_change_threshold: float = 10.0
+
+    # Risk — external source timeouts
+    risk_cnj_timeout_s: int = 15
+    risk_ibge_timeout_s: int = 10
+    risk_transparencia_timeout_s: int = 10
+    risk_fipe_timeout_s: int = 8
+
+    # Risk — configurable thresholds
+    risk_homicide_threshold_high: int = 30
+    risk_homicide_threshold_medium: int = 15
+    risk_idh_threshold_low: float = 0.650
+    risk_idh_threshold_medium: float = 0.750
+    risk_pop_decline_threshold: float = 0.05
+    risk_iptu_debt_ratio_high: float = 0.30
+    risk_cnpj_address_penalty: int = 15
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",")]

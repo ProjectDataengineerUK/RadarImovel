@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"layer_type": "APP", "name": "Área de Preservação Permanente Teste"},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.60, -23.55],
+          [-46.59, -23.55],
+          [-46.59, -23.54],
+          [-46.60, -23.54],
+          [-46.60, -23.55]
+        ]]
+      }
+    }
+  ]
+}

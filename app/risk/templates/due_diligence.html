@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Relatório de Due Diligence — {{ property.address or property.city }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1a1a1a; padding: 2cm; }
+    h1 { font-size: 18pt; margin-bottom: 4pt; }
+    h2 { font-size: 13pt; margin: 18pt 0 6pt; border-bottom: 1px solid #e5e7eb; padding-bottom: 3pt; }
+    .subtitle { color: #6b7280; font-size: 10pt; margin-bottom: 16pt; }
+    .badge {
+      display: inline-block; padding: 4pt 10pt; border-radius: 4pt;
+      font-weight: bold; font-size: 11pt; color: #fff;
+      background-color: {{ risk.risk_level | risk_color }};
+    }
+    .score-row { display: flex; gap: 12pt; margin: 10pt 0; flex-wrap: wrap; }
+    .score-cell { flex: 1; min-width: 80pt; border: 1px solid #e5e7eb; border-radius: 4pt; padding: 8pt; text-align: center; }
+    .score-cell .label { font-size: 9pt; color: #6b7280; margin-bottom: 3pt; }
+    .score-cell .value { font-size: 16pt; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+    th { background: #f3f4f6; text-align: left; padding: 5pt 8pt; font-weight: 600; }
+    td { padding: 5pt 8pt; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+    .partial { color: #f97316; font-size: 9pt; }
+    .footer { margin-top: 24pt; font-size: 9pt; color: #9ca3af; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Relatório de Due Diligence</h1>
+  <p class="subtitle">
+    {{ property.address or "" }} · {{ property.city }}/{{ property.state }} ·
+    Gerado em {{ risk.calculated_at[:10] if risk.calculated_at else "N/D" }}
+  </p>
+
+  <h2>Score de Risco</h2>
+  <p>
+    <span class="badge">{{ risk.risk_level | upper }}</span>
+    &nbsp;&nbsp;
+    <strong style="font-size: 20pt;">{{ risk.score_total }}</strong>
+    <span style="color: #6b7280;"> / 100</span>
+    {% if risk.score_partial %}
+    <span class="partial">&nbsp;(score parcial — fontes indisponíveis)</span>
+    {% endif %}
+  </p>
+
+  <div class="score-row">
+    {% set dims = [
+      ("Jurídico", risk.score_juridico, "A"),
+      ("Fundiário", risk.score_fundiario, "B"),
+      ("Fiscal", risk.score_fiscal, "C"),
+      ("Ocupação", risk.score_ocupacao, "D"),
+      ("Socioecon.", risk.score_socioeconomico, "E"),
+      ("Mercado", risk.score_mercado, "F"),
+    ] %}
+    {% for label, score, code in dims %}
+    <div class="score-cell">
+      <div class="label">{{ label }} ({{ code }})</div>
+      <div class="value">{{ score | round(1) }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2>Imóvel</h2>
+  <table>
+    <tr><th>Campo</th><th>Valor</th></tr>
+    <tr><td>Endereço</td><td>{{ property.address or "N/D" }}</td></tr>
+    <tr><td>Cidade/UF</td><td>{{ property.city }}/{{ property.state }}</td></tr>
+    <tr><td>Tipo</td><td>{{ property.property_type }}</td></tr>
+    <tr><td>Valor atual</td><td>R$ {{ "{:,.2f}".format(property.current_value) }}</td></tr>
+    <tr><td>Desconto</td><td>{{ property.discount_percent or "N/D" }}%</td></tr>
+    <tr><td>Ocupação</td><td>{{ property.occupancy_status }}</td></tr>
+    <tr><td>Modalidade</td><td>{{ property.sale_modality }}</td></tr>
+  </table>
+
+  <h2>Indicadores Auditáveis</h2>
+  {% if risk.indicators %}
+  <table>
+    <thead>
+      <tr><th>Código</th><th>Valor</th><th>Fonte</th><th>Data</th><th>Nota</th></tr>
+    </thead>
+    <tbody>
+      {% for code, ind in risk.indicators.items() %}
+      <tr>
+        <td><strong>{{ ind.code }}</strong></td>
+        <td>{{ ind.value }}</td>
+        <td>{{ ind.source }}</td>
+        <td>{{ ind.date_fetched }}</td>
+        <td>{{ ind.note or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: #6b7280;">Nenhum indicador disponível.</p>
+  {% endif %}
+
+  <div class="footer">
+    Radar Imóvel · Due Diligence automatizada · v{{ risk.calculation_version }} ·
+    Fontes: {{ risk.sources_consulted | join(", ") }}
+  </div>
+</body>
+</html>

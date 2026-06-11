@@ -112,6 +112,49 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
+export interface RiskIndicator {
+  code: string;
+  value: unknown;
+  source: string;
+  date_fetched: string;
+  note: string | null;
+}
+
+export interface RiskScore {
+  property_id: string;
+  score_total: number;
+  risk_level: "low" | "moderate" | "elevated" | "high" | "critical";
+  score_juridico: number;
+  score_fundiario: number;
+  score_fiscal: number;
+  score_ocupacao: number;
+  score_socioeconomico: number;
+  score_mercado: number;
+  score_partial: boolean;
+  indicators: Record<string, RiskIndicator>;
+  sources_consulted: string[];
+  calculation_version: string;
+  calculated_at: string | null;
+}
+
+export interface RiskHeatmapFeature {
+  type: "Feature";
+  properties: {
+    city: string;
+    state: string;
+    risk_avg: number;
+    property_count: number;
+    lat?: number;
+    lng?: number;
+  };
+  geometry: unknown | null;
+}
+
+export interface RiskHeatmap {
+  type: "FeatureCollection";
+  features: RiskHeatmapFeature[];
+}
+
 export interface PropertyFilters {
   state?: string;
   city?: string;

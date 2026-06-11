@@ -38,6 +38,60 @@ resource "google_pubsub_topic" "edital_events_dlq" {
   name = "edital-events-dlq"
 }
 
+# ── Mapa de Risco ────────────────────────────────────────────────────────────
+
+resource "google_pubsub_topic" "risk_events" {
+  name = "risk-events"
+}
+
+resource "google_pubsub_topic" "risk_events_dlq" {
+  name = "risk-events-dlq"
+}
+
+resource "google_pubsub_subscription" "risk_events_sub" {
+  name  = "risk-events-sub"
+  topic = google_pubsub_topic.risk_events.name
+
+  ack_deadline_seconds       = 120
+  message_retention_duration = "86400s"
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.risk_events_dlq.id
+    max_delivery_attempts = 5
+  }
+
+  retry_policy {
+    minimum_backoff = "30s"
+    maximum_backoff = "600s"
+  }
+}
+
+resource "google_pubsub_topic" "risk_change_events" {
+  name = "risk-change-events"
+}
+
+resource "google_pubsub_topic" "risk_change_events_dlq" {
+  name = "risk-change-events-dlq"
+}
+
+resource "google_pubsub_subscription" "risk_change_events_sub" {
+  name  = "risk-change-events-sub"
+  topic = google_pubsub_topic.risk_change_events.name
+
+  ack_deadline_seconds       = 60
+  message_retention_duration = "86400s"
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.risk_change_events_dlq.id
+    max_delivery_attempts = 5
+  }
+
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "300s"
+  }
+}
+
 resource "google_pubsub_subscription" "edital_events_sub" {
   name  = "edital-events-sub"
   topic = google_pubsub_topic.edital_events.name

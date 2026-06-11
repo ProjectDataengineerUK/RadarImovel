@@ -133,6 +133,17 @@ def run(bank: str, uf: str | None = None, fetch_detail: bool = True) -> None:
                                         "bank_id": str(bank_row.id),
                                     },
                                 )
+                            publish_event(
+                                settings.pubsub_project_id,
+                                settings.pubsub_topic_risk,
+                                {
+                                    "property_id": str(prop.id),
+                                    "lat": float(prop.latitude) if prop.latitude else None,
+                                    "lng": float(prop.longitude) if prop.longitude else None,
+                                    "city": prop.city,
+                                    "state": prop.state,
+                                },
+                            )
                             stats["new"] += 1
 
                         elif existing.content_hash != content_hash:
@@ -151,6 +162,17 @@ def run(bank: str, uf: str | None = None, fetch_detail: bool = True) -> None:
                                         "property_id": str(existing.id),
                                         "event_type": "changed",
                                         "changes": [c.field_name for c in changes],
+                                    },
+                                )
+                                publish_event(
+                                    settings.pubsub_project_id,
+                                    settings.pubsub_topic_risk,
+                                    {
+                                        "property_id": str(existing.id),
+                                        "lat": float(existing.latitude) if existing.latitude else None,
+                                        "lng": float(existing.longitude) if existing.longitude else None,
+                                        "city": existing.city,
+                                        "state": existing.state,
                                     },
                                 )
                                 stats["changed"] += 1

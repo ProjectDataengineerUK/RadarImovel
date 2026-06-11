@@ -6,10 +6,16 @@ import { useProperty } from "@/hooks/useProperties";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import ScoreBadge from "@/components/ScoreBadge";
 import EditalSection from "@/components/EditalSection";
+import { RiskScoreBadge } from "@/components/RiskScoreBadge";
+import { RiskRadarChart } from "@/components/RiskRadarChart";
+import { RiskIndicatorList } from "@/components/RiskIndicatorList";
+import { DueDiligenceButton } from "@/components/DueDiligenceButton";
+import { usePropertyRisk } from "@/hooks/useRisk";
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError } = useProperty(id);
+  const { data: riskScore } = usePropertyRisk(id);
 
   if (isLoading) return <div className="p-8 text-gray-500">Carregando...</div>;
   if (isError || !data) return <div className="p-8 text-red-500">Imóvel não encontrado.</div>;
@@ -52,6 +58,20 @@ export default function PropertyDetailPage() {
       </div>
 
       {edital_processed && edital && <EditalSection edital={edital} />}
+
+      {riskScore && (
+        <div className="space-y-4 rounded-xl border p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Risco do Imóvel</h2>
+            <div className="flex items-center gap-3">
+              <RiskScoreBadge score={riskScore} size="lg" />
+              <DueDiligenceButton propertyId={id} />
+            </div>
+          </div>
+          <RiskRadarChart score={riskScore} />
+          <RiskIndicatorList indicators={riskScore.indicators} />
+        </div>
+      )}
 
       {changes.length > 0 && (
         <div>

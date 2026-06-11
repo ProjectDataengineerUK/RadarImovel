@@ -64,6 +64,20 @@ variable "gemini_model" {
   default     = "gemini-2.0-flash"
 }
 
+# ── Mapa de Risco ────────────────────────────────────────────────────────────
+
+variable "risk_score_change_threshold" {
+  description = "Pontos mínimos de variação para publicar risk-change-events"
+  type        = number
+  default     = 10
+}
+
+variable "risk_job_enabled" {
+  description = "Habilita o job radar-calculate-risk"
+  type        = bool
+  default     = true
+}
+
 variable "gcs_bucket_docs" {
   description = "Bucket dos PDFs de editais (prefix editais/)"
   type        = string
