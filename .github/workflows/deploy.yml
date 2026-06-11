@@ -231,6 +231,25 @@ jobs:
             && gcloud run jobs update radar-calculate-risk "${BASE_FLAGS[@]}" \
             || gcloud run jobs create radar-calculate-risk "${BASE_FLAGS[@]}"
 
+      - name: Update radar-load-geodata image
+        run: |
+          BASE_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},GCS_BUCKET_RAW=radar-raw"
+            --set-secrets="DB_PASSWORD=db_password:latest"
+            --project=${{ env.PROJECT_ID }}
+            --command="python,-m,jobs.load_geodata"
+            --memory=4Gi
+            --cpu=2
+            --max-retries=1
+            --task-timeout=3600s
+          )
+          gcloud run jobs describe radar-load-geodata --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-load-geodata "${BASE_FLAGS[@]}" \
+            || gcloud run jobs create radar-load-geodata "${BASE_FLAGS[@]}"
+
       # ── Run migrations ──────────────────────────────────────────────────────
 
       - name: Run database migrations
