@@ -12,6 +12,8 @@ import { RiskIndicatorList } from "@/components/RiskIndicatorList";
 import { DueDiligenceButton } from "@/components/DueDiligenceButton";
 import { usePropertyRisk } from "@/hooks/useRisk";
 import { usePropertyOffers } from "@/hooks/useProperties";
+import { PriceDropForecast } from "@/components/PriceDropForecast";
+import { AskEdital } from "@/components/AskEdital";
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -99,6 +101,10 @@ export default function PropertyDetailPage() {
       )}
 
       {edital_processed && edital && <EditalSection edital={edital} />}
+
+      <PriceDropForecast propertyId={id} />
+
+      {edital_processed && <AskEdital propertyId={id} />}
 
       {riskScore && (
         <div className="space-y-4 rounded-xl border p-6">

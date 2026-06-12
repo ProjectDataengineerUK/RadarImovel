@@ -183,6 +183,15 @@ def process_message(session: Session, event: dict) -> str:
 
     session.commit()
 
+    # Onda 4: indexa chunks no Vector Search para RAG
+    try:
+        from app.rag.indexer import index_document
+        n_chunks = index_document(session, doc)
+        session.commit()
+        log.info("editais.rag_indexed", property_id=raw_pid, chunks=n_chunks)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("editais.rag_index_error", property_id=raw_pid, error=str(exc))
+
     publish_event(
         settings.pubsub_topic_events,
         {"property_id": raw_pid, "event_type": "edital_processed"},

@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.models.document import Document
 from app.models.bank import Bank
 from app.models.property import Property, PropertyChange, PropertyOffer
+from app.models.prediction import PricePrediction
 from app.models.user import User
 from app.schemas.matricula import MatriculaOut
 
@@ -207,6 +208,34 @@ def get_property(property_id: uuid.UUID, db: Session = Depends(get_db)):
         "edital": edital,
         "matricula": matricula,
     }
+
+
+@router.get("/{property_id}/predictions")
+def get_predictions(
+    property_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_feature("price_forecast")),
+):
+    prop = db.query(Property).filter_by(id=property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404)
+    preds = (
+        db.query(PricePrediction)
+        .filter_by(property_id=property_id)
+        .order_by(PricePrediction.horizon)
+        .all()
+    )
+    return [
+        {
+            "horizon": p.horizon,
+            "probability": float(p.probability),
+            "expected_drop_pct": float(p.expected_drop_pct),
+            "model_version": p.model_version,
+            "basis": p.basis,
+            "computed_at": p.computed_at.isoformat(),
+        }
+        for p in preds
+    ]
 
 
 @router.get("/{property_id}/offers")

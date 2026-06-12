@@ -95,6 +95,42 @@ locals {
   }
 }
 
+# Onda 4: job semanal de previsão de queda de preço (segunda-feira 02h UTC)
+resource "google_cloud_scheduler_job" "predict_drops" {
+  name             = "predict-drops-weekly"
+  schedule         = "0 2 * * 1"
+  time_zone        = "UTC"
+  attempt_deadline = "3600s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-predict-drops:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
+# Onda 4: Radar Index — 1º de cada mês às 03h UTC
+resource "google_cloud_scheduler_job" "build_radar_index" {
+  name             = "build-radar-index-monthly"
+  schedule         = "0 3 1 * *"
+  time_zone        = "UTC"
+  attempt_deadline = "1800s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-build-index:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
 resource "google_cloud_scheduler_job" "collect_source" {
   for_each = local.auctioneer_schedule_pairs
 

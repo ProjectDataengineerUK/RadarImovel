@@ -1,0 +1,82 @@
+# Probabilidades a priori de queda de preço por banco/modalidade
+# Fonte: ciclo típico de venda Caixa + observação de mercado
+# Usadas quando N empírico < BOOTSTRAP_N (30 imóveis)
+
+default:
+  horizon_30:
+    probability: 0.30
+    expected_drop_pct: 12.0
+  horizon_60:
+    probability: 0.50
+    expected_drop_pct: 20.0
+  horizon_90:
+    probability: 0.62
+    expected_drop_pct: 25.0
+
+banks:
+  caixa:
+    modalities:
+      "1º Leilão":
+        horizon_30:
+          probability: 0.45
+          expected_drop_pct: 25.0
+        horizon_60:
+          probability: 0.65
+          expected_drop_pct: 32.0
+        horizon_90:
+          probability: 0.75
+          expected_drop_pct: 37.0
+      "2º Leilão":
+        horizon_30:
+          probability: 0.35
+          expected_drop_pct: 20.0
+        horizon_60:
+          probability: 0.55
+          expected_drop_pct: 25.0
+        horizon_90:
+          probability: 0.68
+          expected_drop_pct: 30.0
+      "Venda Online":
+        horizon_30:
+          probability: 0.22
+          expected_drop_pct: 12.0
+        horizon_60:
+          probability: 0.38
+          expected_drop_pct: 18.0
+        horizon_90:
+          probability: 0.50
+          expected_drop_pct: 22.0
+      "Licitação Aberta":
+        horizon_30:
+          probability: 0.18
+          expected_drop_pct: 8.0
+        horizon_60:
+          probability: 0.28
+          expected_drop_pct: 13.0
+        horizon_90:
+          probability: 0.38
+          expected_drop_pct: 18.0
+  bb:
+    modalities:
+      "Licitação Aberta":
+        horizon_30:
+          probability: 0.28
+          expected_drop_pct: 10.0
+        horizon_60:
+          probability: 0.42
+          expected_drop_pct: 16.0
+        horizon_90:
+          probability: 0.55
+          expected_drop_pct: 22.0
+  brb:
+    modalities:
+      "Licitação Aberta":
+        horizon_30:
+          probability: 0.25
+          expected_drop_pct: 10.0
+        horizon_60:
+          probability: 0.38
+          expected_drop_pct: 15.0
+        horizon_90:
+          probability: 0.50
+          expected_drop_pct: 20.0

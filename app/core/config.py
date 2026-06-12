@@ -83,6 +83,17 @@ class Settings(BaseSettings):
     pubsub_topic_matriculas: str = "matricula-events"
     pubsub_sub_matriculas: str = "matricula-events-sub"
 
+    # Onda 4 — RAG / Vertex AI Vector Search
+    vertex_index_id: str = ""
+    vertex_index_endpoint_id: str = ""
+    vertex_deployed_index_id: str = "radar_rag_deployed"
+    rag_chunk_size: int = 500
+    rag_chunk_overlap: int = 80
+    rag_retrieval_k: int = 6
+
+    # Onda 4 — Radar Index
+    radar_index_gcs_prefix: str = "public/radar_index"
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",")]
