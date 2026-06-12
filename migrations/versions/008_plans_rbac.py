@@ -22,8 +22,8 @@ def upgrade() -> None:
         sa.Column("code", sa.String(50), nullable=False, unique=True),
         sa.Column("name", sa.String(100), nullable=False),
         sa.Column("price_brl", sa.Integer, nullable=False, server_default="0"),
-        sa.Column("features", JSONB, nullable=False, server_default="'{}'"),
-        sa.Column("limits", JSONB, nullable=False, server_default="'{}'"),
+        sa.Column("features", JSONB, nullable=False, server_default=sa.text("'{}'")),
+        sa.Column("limits", JSONB, nullable=False, server_default=sa.text("'{}'")),
         sa.Column("active", sa.Boolean, nullable=False, server_default="true"),
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
@@ -43,7 +43,7 @@ def upgrade() -> None:
 
     # ── users: add role, notification_channels, subscription_id ───────────────
     op.add_column("users", sa.Column("role", sa.String(20), nullable=False, server_default="user"))
-    op.add_column("users", sa.Column("notification_channels", JSONB, nullable=False, server_default="'{}'"))
+    op.add_column("users", sa.Column("notification_channels", JSONB, nullable=False, server_default=sa.text("'{}'")))
     op.add_column("users", sa.Column("subscription_id", UUID(as_uuid=True), sa.ForeignKey("subscriptions.id")))
 
     # ── usage_counters ─────────────────────────────────────────────────────────

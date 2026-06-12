@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column("actual_renovation_cost", sa.Numeric(15, 2)),
         sa.Column("actual_other_costs", sa.Numeric(15, 2)),
         sa.Column("notes", sa.Text),
-        sa.Column("custom_data", sa.JSON, nullable=False, server_default="'{}'"),
+        sa.Column("custom_data", sa.JSON, nullable=False, server_default=sa.text("'{}'")),
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
