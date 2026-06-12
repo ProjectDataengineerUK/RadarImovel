@@ -61,7 +61,6 @@ def upgrade() -> None:
         cost_tables,
         [
             {
-                "id": sa.text("uuid_generate_v4()"),
                 "state": state,
                 "itbi_pct": itbi,
                 "registro_pct": reg,
