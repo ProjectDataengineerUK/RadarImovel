@@ -50,15 +50,6 @@ const NAV = [
       </svg>
     ),
   },
-  {
-    href: "/admin",
-    label: "Admin",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-      </svg>
-    ),
-  },
 ];
 
 function Sidebar() {
@@ -136,7 +127,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => { setMounted(true); }, []);
 
-  const showSidebar = mounted && !isAuthRoute && pathname !== "/";
+  const isAdminRoute = pathname?.startsWith("/admin");
+  const showSidebar = mounted && !isAuthRoute && pathname !== "/" && !isAdminRoute;
 
   return (
     <html lang="pt-BR" className={`dark ${inter.className}`}>
