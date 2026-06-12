@@ -43,7 +43,7 @@ variable "github_repo" {
 variable "enabled_banks" {
   description = "Bancos com coleta agendada (devem ter active=true em banks e connector validado)"
   type        = list(string)
-  default     = ["caixa"]
+  default     = ["caixa", "bb", "brb", "bnb", "basa", "banrisul", "banestes"]
 }
 
 variable "bank_request_delay_ms" {

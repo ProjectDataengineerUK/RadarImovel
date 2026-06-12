@@ -82,6 +82,31 @@ resource "google_cloud_scheduler_job" "collect_bank" {
   }
 }
 
+# ── Enriquecimento de detalhes Caixa (ocupação): 2h após cada coleta ──────────
+# collect_caixa: 11h, 17h, 23h UTC → enrich_details: 13h, 19h, 01h UTC
+locals {
+  enrich_schedules = ["0 13 * * *", "0 19 * * *", "0 1 * * *"]
+}
+
+resource "google_cloud_scheduler_job" "enrich_details_caixa" {
+  for_each = toset(local.enrich_schedules)
+
+  name             = "enrich-details-caixa-${replace(each.key, " ", "-")}"
+  schedule         = each.key
+  time_zone        = "UTC"
+  attempt_deadline = "3600s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-enrich-details:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
 # ── Onda 3: schedulers por leiloeiro (SOURCE_REGISTRY) ───────────────────────
 # tos_compliant=false por padrão → job bloqueia até FORCE_TOS=true ser definido
 # após validação jurídica individual de cada ToS

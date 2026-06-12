@@ -17,10 +17,15 @@ _BATCH = int(os.environ.get("BATCH_SIZE", "100"))
 _DELAY_MS = int(os.environ.get("DELAY_MS", "500"))
 _BANK = os.environ.get("BANK", "caixa")
 
+_SCRAPERS = {"caixa": CaixaDetailScraper}
+
 
 def run() -> None:
     log.info("job.start", bank=_BANK, batch_size=_BATCH, delay_ms=_DELAY_MS)
-    scraper = CaixaDetailScraper()
+    if _BANK not in _SCRAPERS:
+        log.warning("job.bank_not_supported", bank=_BANK, supported=list(_SCRAPERS))
+        return
+    scraper = _SCRAPERS[_BANK]()
     stats = {"processed": 0, "enriched": 0, "errors": 0, "skipped": 0}
 
     with SessionLocal() as session:
