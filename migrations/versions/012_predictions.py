@@ -12,7 +12,7 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "price_predictions",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
         sa.Column(
             "property_id",
             postgresql.UUID(as_uuid=True),
@@ -36,7 +36,7 @@ def upgrade() -> None:
 
     op.create_table(
         "rag_chunks",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
         sa.Column(
             "property_id",
             postgresql.UUID(as_uuid=True),
@@ -64,7 +64,7 @@ def upgrade() -> None:
 
     op.create_table(
         "radar_index",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("period", sa.String(7), nullable=False),
         sa.Column("state", sa.String(2), nullable=False),
         sa.Column("bank_code", sa.String(20), nullable=True),

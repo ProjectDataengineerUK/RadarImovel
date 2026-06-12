@@ -37,7 +37,7 @@ def upgrade() -> None:
     # ── property_offers ───────────────────────────────────────────────────────
     op.create_table(
         "property_offers",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("property_id", UUID(as_uuid=True), sa.ForeignKey("properties.id", ondelete="CASCADE"), nullable=False),
         sa.Column("source_id", UUID(as_uuid=True), sa.ForeignKey("banks.id"), nullable=False),
         sa.Column("price", sa.Numeric(15, 2), nullable=False),
