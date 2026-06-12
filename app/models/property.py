@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, date
 from decimal import Decimal
-from sqlalchemy import String, Text, Numeric, SmallInteger, Date, ForeignKey, Index
+from sqlalchemy import String, Text, Numeric, SmallInteger, Date, ForeignKey, Index, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, new_uuid, utcnow
@@ -47,6 +47,12 @@ class Property(Base):
     edital_url: Mapped[str | None] = mapped_column(Text)
     risk_level: Mapped[str | None] = mapped_column(String(20))
     opportunity_score: Mapped[int | None] = mapped_column(SmallInteger)
+    # Onda 3: preço melhor de entre todas as ofertas; None até primeira oferta criada
+    best_price: Mapped[Decimal | None] = mapped_column(Numeric(15, 2))
+    # Onda 3: dedup probabilístico — aponta para possível duplicata
+    possible_duplicate_of: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("properties.id"), nullable=True
+    )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     first_seen_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
     last_seen_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
@@ -54,6 +60,30 @@ class Property(Base):
 
     bank: Mapped["Bank"] = relationship("Bank", back_populates="properties")
     changes: Mapped[list["PropertyChange"]] = relationship("PropertyChange", back_populates="property")
+    offers: Mapped[list["PropertyOffer"]] = relationship("PropertyOffer", back_populates="property")
+
+
+class PropertyOffer(Base):
+    """Uma oferta de um imóvel numa fonte específica (banco, leiloeiro, tribunal)."""
+    __tablename__ = "property_offers"
+    __table_args__ = (
+        Index("ix_property_offers_property_source", "property_id", "source_id", unique=True),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    property_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("properties.id"), nullable=False)
+    source_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("banks.id"), nullable=False)
+    price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    modality: Mapped[str] = mapped_column(String(50), nullable=False)
+    auction_date: Mapped[date | None] = mapped_column(Date)
+    official_url: Mapped[str] = mapped_column(Text, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    external_code: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow, nullable=False)
+
+    property: Mapped["Property"] = relationship("Property", back_populates="offers")
+    source: Mapped["Bank"] = relationship("Bank", back_populates="offers")
 
 
 class PropertyChange(Base):

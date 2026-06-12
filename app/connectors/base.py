@@ -15,6 +15,14 @@ class RawProperty:
 
 class BankConnector(ABC):
     bank_code: str
+    # Onda 3: generic source attributes
+    source_type: str = "bank"      # "bank" | "auctioneer" | "court"
+    source_code: str = ""          # mirrors bank_code; set per subclass
+    tos_compliant: bool = True     # leiloeiros start False until ToS reviewed
+
+    @property
+    def _effective_source_code(self) -> str:
+        return self.source_code or self.bank_code
 
     @abstractmethod
     def discover_sources(self) -> list[str]:
@@ -31,3 +39,7 @@ class BankConnector(ABC):
     @abstractmethod
     def normalize(self, raw: RawProperty) -> dict:
         """Converte RawProperty para o schema padrão de Property."""
+
+
+# Alias para código novo; código existente continua usando BankConnector
+SourceConnector = BankConnector

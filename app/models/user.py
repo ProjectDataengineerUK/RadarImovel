@@ -1,10 +1,12 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy import String, BigInteger, Boolean, ForeignKey, Numeric, Text
+from sqlalchemy import String, BigInteger, Boolean, ForeignKey, Numeric, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, new_uuid, utcnow
+
+USER_ROLES = ("user", "suporte", "operador", "admin")
 
 
 class User(Base):
@@ -14,11 +16,17 @@ class User(Base):
     firebase_uid: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False)  # PII — nunca logar, nunca expor
     telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger)
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    notification_channels: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    subscription_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("subscriptions.id"))
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
 
     watchlists: Mapped[list["Watchlist"]] = relationship("Watchlist", back_populates="user")
     alerts: Mapped[list["Alert"]] = relationship("Alert", back_populates="user")
     favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user")
+    subscription: Mapped["Subscription | None"] = relationship(  # type: ignore[name-defined]
+        "Subscription", foreign_keys=[subscription_id], lazy="joined"
+    )
 
 
 class Watchlist(Base):

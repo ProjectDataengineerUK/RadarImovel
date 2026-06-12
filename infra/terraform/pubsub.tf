@@ -92,6 +92,34 @@ resource "google_pubsub_subscription" "risk_change_events_sub" {
   }
 }
 
+# ── Onda 2: matrículas ──────────────────────────────────────────────────────
+
+resource "google_pubsub_topic" "matricula_events" {
+  name = "matricula-events"
+}
+
+resource "google_pubsub_topic" "matricula_events_dlq" {
+  name = "matricula-events-dlq"
+}
+
+resource "google_pubsub_subscription" "matricula_events_sub" {
+  name  = "matricula-events-sub"
+  topic = google_pubsub_topic.matricula_events.name
+
+  ack_deadline_seconds       = 180
+  message_retention_duration = "86400s"
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.matricula_events_dlq.id
+    max_delivery_attempts = 5
+  }
+
+  retry_policy {
+    minimum_backoff = "30s"
+    maximum_backoff = "600s"
+  }
+}
+
 resource "google_pubsub_subscription" "edital_events_sub" {
   name  = "edital-events-sub"
   topic = google_pubsub_topic.edital_events.name

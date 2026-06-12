@@ -14,10 +14,14 @@ class Bank(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     scraping_strategy: Mapped[str | None] = mapped_column(String(100))
+    # Onda 3: generalização bank → source (leiloeiros, tribunais)
+    source_type: Mapped[str] = mapped_column(String(20), nullable=False, default="bank")
+    tos_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
 
     sources: Mapped[list["Source"]] = relationship("Source", back_populates="bank")
     properties: Mapped[list["Property"]] = relationship("Property", back_populates="bank")
+    offers: Mapped[list["PropertyOffer"]] = relationship("PropertyOffer", back_populates="source")
 
 
 class Source(Base):

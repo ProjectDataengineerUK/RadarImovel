@@ -1,0 +1,39 @@
+# Custos de aquisição por UF — referência 2026
+# itbi_pct: alíquota ITBI (% sobre valor venal ou de compra, o maior)
+# registro_pct: emolumentos de registro estimados (% sobre valor do imóvel)
+# escritura_pct: emolumentos de escritura/tabelionato (% sobre valor do imóvel)
+# fonte: legislações municipais e tabelas cartorárias publicadas pelos TJs
+
+states:
+  AC: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  AL: {itbi_pct: 2.0, registro_pct: 0.25, escritura_pct: 0.20}
+  AM: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  AP: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  BA: {itbi_pct: 2.0, registro_pct: 0.35, escritura_pct: 0.30}
+  CE: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  DF: {itbi_pct: 3.0, registro_pct: 0.40, escritura_pct: 0.35}
+  ES: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  GO: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  MA: {itbi_pct: 2.0, registro_pct: 0.25, escritura_pct: 0.20}
+  MG: {itbi_pct: 3.0, registro_pct: 0.40, escritura_pct: 0.35}
+  MS: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  MT: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  PA: {itbi_pct: 2.0, registro_pct: 0.25, escritura_pct: 0.20}
+  PB: {itbi_pct: 2.0, registro_pct: 0.25, escritura_pct: 0.20}
+  PE: {itbi_pct: 2.0, registro_pct: 0.35, escritura_pct: 0.30}
+  PI: {itbi_pct: 2.0, registro_pct: 0.25, escritura_pct: 0.20}
+  PR: {itbi_pct: 2.0, registro_pct: 0.35, escritura_pct: 0.30}
+  RJ: {itbi_pct: 3.0, registro_pct: 0.40, escritura_pct: 0.35}
+  RN: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  RO: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  RR: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+  RS: {itbi_pct: 3.0, registro_pct: 0.40, escritura_pct: 0.35}
+  SC: {itbi_pct: 2.0, registro_pct: 0.35, escritura_pct: 0.30}
+  SE: {itbi_pct: 2.0, registro_pct: 0.25, escritura_pct: 0.20}
+  SP: {itbi_pct: 3.0, registro_pct: 0.40, escritura_pct: 0.35}
+  TO: {itbi_pct: 2.0, registro_pct: 0.30, escritura_pct: 0.25}
+
+defaults:
+  itbi_pct: 2.0
+  registro_pct: 0.30
+  escritura_pct: 0.25

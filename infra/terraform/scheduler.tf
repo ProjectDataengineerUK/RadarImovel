@@ -39,6 +39,24 @@ locals {
   }
 }
 
+# ── Onda 1: expire subscriptions diariamente às 01h UTC ──────────────────────
+resource "google_cloud_scheduler_job" "expire_subscriptions" {
+  name             = "expire-subscriptions"
+  schedule         = "0 1 * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "300s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-expire-subscriptions:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
 resource "google_cloud_scheduler_job" "collect_bank" {
   for_each = local.bank_schedule_pairs
 
@@ -54,6 +72,44 @@ resource "google_cloud_scheduler_job" "collect_bank" {
       overrides = {
         containerOverrides = [{
           env = [{ name = "BANK", value = each.value.bank }]
+        }]
+      }
+    }))
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
+# ── Onda 3: schedulers por leiloeiro (SOURCE_REGISTRY) ───────────────────────
+# tos_compliant=false por padrão → job bloqueia até FORCE_TOS=true ser definido
+# após validação jurídica individual de cada ToS
+locals {
+  auctioneers = ["zuk", "mega", "sodre", "fidalgo", "frazao"]
+  # Leiloeiros: 2 disparos/dia (menos frequente que bancos)
+  auctioneer_schedules = ["0 12 * * *", "0 20 * * *"]
+  auctioneer_schedule_pairs = {
+    for pair in setproduct(local.auctioneers, local.auctioneer_schedules) :
+    "${pair[0]}-${replace(pair[1], " ", "-")}" => { source = pair[0], cron = pair[1] }
+  }
+}
+
+resource "google_cloud_scheduler_job" "collect_source" {
+  for_each = local.auctioneer_schedule_pairs
+
+  name             = "collect-${each.value.source}-${replace(each.value.cron, " ", "-")}"
+  schedule         = each.value.cron
+  time_zone        = "UTC"
+  attempt_deadline = "3600s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-collect-source:run"
+    body = base64encode(jsonencode({
+      overrides = {
+        containerOverrides = [{
+          env = [{ name = "SOURCE", value = each.value.source }]
         }]
       }
     }))

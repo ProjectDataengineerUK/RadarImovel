@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.api.middleware.auth import get_current_user
+from app.entitlements.service import get_entitlements
 from app.models.user import User
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -18,12 +19,22 @@ def _redis_client():
 
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ent = get_entitlements(db, current_user)
     return {
         "id": str(current_user.id),
         "firebase_uid": current_user.firebase_uid,
+        "role": current_user.role,
         "telegram_connected": current_user.telegram_chat_id is not None,
         "created_at": current_user.created_at,
+        "plan": {
+            "code": ent.plan_code,
+            "features": ent.features,
+            "limits": ent.limits,
+        },
     }
 
 

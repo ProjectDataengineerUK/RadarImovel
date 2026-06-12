@@ -30,3 +30,20 @@ export function useProperty(id: string) {
     enabled: !!id,
   });
 }
+
+export interface PropertyOffer {
+  id: string;
+  source_name: string;
+  price: number;
+  modality: string;
+  auction_date: string | null;
+  official_url: string;
+}
+
+export function usePropertyOffers(id: string) {
+  return useQuery<PropertyOffer[]>({
+    queryKey: ["property", id, "offers"],
+    queryFn: () => api.get(`/properties/${id}/offers`).then((r) => r.data),
+    enabled: !!id,
+  });
+}

@@ -72,6 +72,17 @@ class Settings(BaseSettings):
     risk_iptu_debt_ratio_high: float = 0.30
     risk_cnpj_address_penalty: int = 15
 
+    # Canais de notificação adicionais
+    whatsapp_phone_number_id: str = ""
+    whatsapp_access_token: str = ""
+    sendgrid_api_key: str = ""
+    fcm_project_id: str = ""
+    fcm_access_token: str = ""
+
+    # Pub/Sub — matrícula
+    pubsub_topic_matriculas: str = "matricula-events"
+    pubsub_sub_matriculas: str = "matricula-events-sub"
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",")]

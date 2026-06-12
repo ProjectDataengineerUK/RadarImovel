@@ -11,11 +11,13 @@ import { RiskRadarChart } from "@/components/RiskRadarChart";
 import { RiskIndicatorList } from "@/components/RiskIndicatorList";
 import { DueDiligenceButton } from "@/components/DueDiligenceButton";
 import { usePropertyRisk } from "@/hooks/useRisk";
+import { usePropertyOffers } from "@/hooks/useProperties";
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError } = useProperty(id);
   const { data: riskScore } = usePropertyRisk(id);
+  const { data: offersData } = usePropertyOffers(id);
 
   if (isLoading) return <div className="p-8 text-gray-500">Carregando...</div>;
   if (isError || !data) return <div className="p-8 text-red-500">Imóvel não encontrado.</div>;
@@ -56,6 +58,45 @@ export default function PropertyDetailPage() {
           Ver no site oficial
         </a>
       </div>
+
+      {offersData && offersData.length > 1 && (
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Disponível em {offersData.length} fontes</h2>
+          <div className="rounded-lg border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-2 text-left text-gray-600">Fonte</th>
+                  <th className="px-4 py-2 text-left text-gray-600">Preço</th>
+                  <th className="px-4 py-2 text-left text-gray-600">Modalidade</th>
+                  <th className="px-4 py-2 text-left text-gray-600">Data</th>
+                  <th className="px-4 py-2 text-left text-gray-600"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {offersData.map((o) => (
+                  <tr key={o.id} className="border-b last:border-0">
+                    <td className="px-4 py-2 font-medium">{o.source_name}</td>
+                    <td className="px-4 py-2 text-blue-700 font-semibold">{formatCurrency(o.price)}</td>
+                    <td className="px-4 py-2 text-gray-600">{o.modality}</td>
+                    <td className="px-4 py-2 text-gray-400">{o.auction_date ? formatDate(o.auction_date) : "—"}</td>
+                    <td className="px-4 py-2">
+                      <a
+                        href={o.official_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-xs"
+                      >
+                        Ver →
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {edital_processed && edital && <EditalSection edital={edital} />}
 

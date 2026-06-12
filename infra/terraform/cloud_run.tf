@@ -171,6 +171,28 @@ resource "google_cloud_run_v2_job" "calculate_risk" {
   depends_on = [google_project_service.apis]
 }
 
+# ── Onda 2: job de matrículas ────────────────────────────────────────────────
+resource "google_cloud_run_v2_job" "process_matriculas" {
+  name     = "radar-process-matriculas"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "jobs/process_matriculas.py"]
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
 # Allow unauthenticated access (Firebase JWT validated by FastAPI middleware)
 resource "google_cloud_run_v2_service_iam_member" "api_public" {
   project  = var.project_id

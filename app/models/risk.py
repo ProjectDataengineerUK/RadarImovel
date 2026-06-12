@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, ForeignKey, Index, Numeric, String, Text, TIMESTAMP
-from sqlalchemy.dialects.postgresql import ARRAY, JSON, UUID
+from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, new_uuid, utcnow
@@ -32,7 +33,7 @@ class PropertyRiskScore(Base):
     risk_level: Mapped[str] = mapped_column(String(10), nullable=False)
     indicators: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     score_partial: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    sources_consulted: Mapped[list] = mapped_column(ARRAY(Text), nullable=False, default=list)
+    sources_consulted: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     calculation_version: Mapped[str] = mapped_column(String(10), nullable=False, default="1.0")
     calculated_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), default=utcnow, nullable=False

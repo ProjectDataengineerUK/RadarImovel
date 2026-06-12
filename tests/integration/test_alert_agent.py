@@ -122,14 +122,13 @@ def test_match_respects_min_discount(session, seed):
 
 
 def test_process_event_sends_telegram(seed):
+    mock_channel = AsyncMock()
+    mock_channel.send.return_value = True
+
     with patch("app.agents.alert_agent.SessionLocal") as mock_sl, \
-         patch("app.agents.alert_agent.TelegramChannel") as mock_channel_cls, \
+         patch("app.agents.alert_agent.build_channels", return_value=[(mock_channel, "123456789")]) as mock_bc, \
          patch("app.agents.alert_agent.match_watchlists") as mock_match, \
          patch("app.agents.alert_agent.format_property_alert", return_value="Alert!"):
-
-        mock_channel = AsyncMock()
-        mock_channel.send.return_value = True
-        mock_channel_cls.return_value = mock_channel
 
         mock_session = MagicMock()
         mock_sl.return_value.__enter__.return_value = mock_session
@@ -147,6 +146,7 @@ def test_process_event_sends_telegram(seed):
 
         user = MagicMock()
         user.telegram_chat_id = 123456789
+        user.notification_channels = {}
         watchlist = MagicMock()
         mock_match.return_value = [(user, watchlist)]
 

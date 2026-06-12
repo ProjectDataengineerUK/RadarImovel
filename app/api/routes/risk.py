@@ -5,7 +5,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from app.api.middleware.auth import get_current_user, require_admin
+from app.api.middleware.auth import get_current_user, require_role
 from app.core.database import get_db
 from app.models.property import Property
 from app.models.risk import PropertyRiskScore
@@ -127,7 +127,7 @@ def download_risk_report(
 def recalculate_risk(
     property_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _user=Depends(require_admin),
+    _user=Depends(require_role("admin")),
 ):
     from app.core.config import get_settings
     import json

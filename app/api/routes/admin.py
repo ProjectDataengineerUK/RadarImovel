@@ -6,11 +6,12 @@ from pydantic import BaseModel
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
+from app.api.middleware.auth import require_role
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.document import Document
 from app.models.property import Property
-from app.models.user import Alert
+from app.models.user import Alert, User
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 settings = get_settings()
@@ -23,7 +24,10 @@ VALID_UFS = {
 
 
 @router.get("/status")
-def collector_status(db: Session = Depends(get_db)):
+def collector_status(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("operador")),
+):
     total_active = db.query(func.count(Property.id)).filter(Property.status == "active").scalar()
     last_seen = db.query(func.max(Property.last_seen_at)).scalar()
     first_seen_today = db.query(func.count(Property.id)).filter(
@@ -62,6 +66,7 @@ def _run_collect(uf: str) -> None:
 def trigger_collect(
     req: CollectRequest,
     background_tasks: BackgroundTasks,
+    _: User = Depends(require_role("operador")),
 ):
     uf = req.uf.upper()
     if uf not in VALID_UFS:
@@ -72,7 +77,11 @@ def trigger_collect(
 
 
 @router.post("/reprocess-edital/{property_id}")
-def reprocess_edital(property_id: uuid.UUID, db: Session = Depends(get_db)):
+def reprocess_edital(
+    property_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("operador")),
+):
     """Re-extração manual do edital: reseta o Document e republica em edital-events."""
     from google.cloud import pubsub_v1
 
@@ -107,7 +116,10 @@ def reprocess_edital(property_id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/health")
-def health_check(db: Session = Depends(get_db)):
+def health_check(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("operador")),
+):
     try:
         db.execute(text("SELECT 1"))
         return {"status": "ok", "db": "connected"}

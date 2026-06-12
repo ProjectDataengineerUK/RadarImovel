@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 security = HTTPBearer()
 _firebase_initialized = False
 
+ROLE_ORDER = {"user": 0, "suporte": 1, "operador": 2, "admin": 3}
+
 
 def _ensure_firebase():
     global _firebase_initialized
@@ -47,3 +49,35 @@ async def get_current_user_or_none(
         return await get_current_user(token=token, db=db)
     except HTTPException:
         return None
+
+
+def require_role(min_role: str):
+    async def dep(user: User = Depends(get_current_user)) -> User:
+        if ROLE_ORDER.get(user.role, 0) < ROLE_ORDER.get(min_role, 0):
+            raise HTTPException(403, detail={"code": "FORBIDDEN_ROLE", "required": min_role})
+        return user
+    return dep
+
+
+def require_feature(flag: str):
+    async def dep(
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> User:
+        from app.entitlements.service import has_feature
+        if not has_feature(db, user, flag):
+            raise HTTPException(403, detail={"code": "PLAN_LIMIT", "feature": flag})
+        return user
+    return dep
+
+
+def consume_quota(feature: str, period: str = "day"):
+    async def dep(
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> User:
+        from app.entitlements.service import consume
+        if not consume(db, user, feature, period):
+            raise HTTPException(429, detail={"code": "QUOTA_EXCEEDED", "feature": feature})
+        return user
+    return dep
