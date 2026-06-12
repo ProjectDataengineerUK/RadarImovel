@@ -30,12 +30,13 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
 
-    # Adiciona coluna extraction_confidence em documents se ainda não existir
-    with op.batch_alter_table("documents") as batch_op:
-        batch_op.add_column(sa.Column("extraction_confidence", sa.Numeric(4, 2), nullable=True))
+    # Coluna já existe desde migration 004 (Numeric 3,2); amplia para 4,2 se ainda 3,2.
+    # ADD COLUMN IF NOT EXISTS é idempotente para o caso de fresh DB.
+    op.execute(sa.text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS extraction_confidence NUMERIC(4, 2)"))
+    op.execute(sa.text("ALTER TABLE documents ALTER COLUMN extraction_confidence TYPE NUMERIC(4, 2)"))
 
 
 def downgrade() -> None:
-    with op.batch_alter_table("documents") as batch_op:
-        batch_op.drop_column("extraction_confidence")
+    # Reverte a ampliação de precisão (4,2 → 3,2); coluna pertence à migration 004
+    op.execute(sa.text("ALTER TABLE documents ALTER COLUMN extraction_confidence TYPE NUMERIC(3, 2)"))
     op.drop_table("portfolio_items")
