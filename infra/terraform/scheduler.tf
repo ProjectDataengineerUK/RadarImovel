@@ -120,6 +120,92 @@ locals {
   }
 }
 
+# ── Pub/Sub pull jobs: schedulers ────────────────────────────────────────────
+resource "google_cloud_scheduler_job" "process_alerts" {
+  name             = "process-alerts-every-5min"
+  schedule         = "*/5 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "300s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-process-alerts:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
+resource "google_cloud_scheduler_job" "process_editais" {
+  name             = "process-editais-every-15min"
+  schedule         = "*/15 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "900s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-process-editais:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
+resource "google_cloud_scheduler_job" "process_matriculas" {
+  name             = "process-matriculas-every-15min"
+  schedule         = "*/15 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "900s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-process-matriculas:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
+resource "google_cloud_scheduler_job" "calculate_risk" {
+  name             = "calculate-risk-every-30min"
+  schedule         = "*/30 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "3600s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-calculate-risk:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
+resource "google_cloud_scheduler_job" "load_geodata" {
+  name             = "load-geodata-monthly"
+  schedule         = "0 4 1 * *"
+  time_zone        = "UTC"
+  attempt_deadline = "7200s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-load-geodata:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
 # Onda 4: job semanal de previsão de queda de preço (segunda-feira 02h UTC)
 resource "google_cloud_scheduler_job" "predict_drops" {
   name             = "predict-drops-weekly"

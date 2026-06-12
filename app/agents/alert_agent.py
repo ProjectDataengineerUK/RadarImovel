@@ -8,7 +8,7 @@ from app.core.logging import logger
 from app.models.property import Property
 from app.models.user import User, Watchlist, Alert
 from app.services.notification import build_channels
-from app.services.telegram import format_property_alert
+from app.services.telegram import format_property_alert, format_risk_change_alert
 
 settings = get_settings()
 
@@ -109,3 +109,82 @@ async def process_property_event(event: dict) -> None:
 
         session.commit()
         logger.info("alert_agent.processed", property_id=property_id, matches=len(matches))
+
+
+async def _send_message_to_user(
+    user: User, prop: Property, watchlist: Watchlist, message: str, session: Session
+) -> None:
+    channels = build_channels(user)
+    if not channels:
+        return
+
+    for channel, dest in channels:
+        success = False
+        channel_name = type(channel).__name__.lower().replace("channel", "")
+        for attempt in range(1, settings.alert_max_retries + 1):
+            success = await channel.send(dest, message)
+            if success:
+                break
+            logger.warning(
+                "alert_agent.retry", user_id=str(user.id), channel=channel_name, attempt=attempt
+            )
+            await asyncio.sleep(2 ** attempt)
+
+        alert = Alert(
+            user_id=user.id,
+            property_id=prop.id,
+            watchlist_id=watchlist.id,
+            channel=channel_name,
+            status="success" if success else "failed",
+            message=message,
+            sent_at=datetime.now(timezone.utc) if success else None,
+        )
+        session.add(alert)
+
+
+async def process_risk_change_event(event: dict) -> None:
+    property_id = event.get("property_id")
+    old_score = event.get("old_score")
+    new_score = event.get("new_score")
+
+    if not property_id or old_score is None or new_score is None:
+        logger.warning("alert_agent.risk_change.invalid", event=event)
+        return
+
+    delta = old_score - new_score
+    if delta <= 10:
+        logger.info(
+            "alert_agent.risk_change.skipped",
+            property_id=property_id,
+            old_score=old_score,
+            new_score=new_score,
+            delta=delta,
+        )
+        return
+
+    with SessionLocal() as session:
+        prop = session.query(Property).filter_by(id=uuid.UUID(property_id)).first()
+        if not prop:
+            logger.warning("alert_agent.risk_change.missing_property", property_id=property_id)
+            return
+
+        matches = match_watchlists(session, property_id)
+        message = format_risk_change_alert({
+            "city": prop.city,
+            "state": prop.state,
+            "old_score": old_score,
+            "new_score": new_score,
+            "delta": delta,
+            "official_url": prop.official_url,
+        })
+
+        for user, watchlist in matches:
+            await _send_message_to_user(user, prop, watchlist, message, session)
+
+        session.commit()
+        logger.info(
+            "alert_agent.risk_change.processed",
+            property_id=property_id,
+            delta=delta,
+            matches=len(matches),
+        )

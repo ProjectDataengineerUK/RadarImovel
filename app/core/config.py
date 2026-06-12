@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     pubsub_topic_risk: str = "risk-events"
     pubsub_sub_risk: str = "risk-events-sub"
     pubsub_topic_risk_changes: str = "risk-change-events"
+    pubsub_sub_risk_changes: str = "risk-change-events-sub"
 
     # Risk — dimension weights
     risk_weight_juridico: float = 0.30

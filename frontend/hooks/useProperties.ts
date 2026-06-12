@@ -47,3 +47,12 @@ export function usePropertyOffers(id: string) {
     enabled: !!id,
   });
 }
+
+export function usePropertyMatricula(id: string) {
+  return useQuery({
+    queryKey: ["property", id, "matricula"],
+    queryFn: () => api.get(`/properties/${id}/matricula`).then((r) => r.data),
+    enabled: !!id,
+    retry: false,
+  });
+}

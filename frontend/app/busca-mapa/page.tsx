@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { PaginatedResponse, Property } from "@/lib/types";
+import { FeatureGate } from "@/components/FeatureGate";
 
 const SearchMap = dynamic(() => import("@/components/SearchMap"), { ssr: false });
 
@@ -25,6 +26,14 @@ const DEFAULT_FILTERS: MapFilters = {
 };
 
 export default function BuscaMapaPage() {
+  return (
+    <FeatureGate feature="risk_score">
+      <BuscaMapaContent />
+    </FeatureGate>
+  );
+}
+
+function BuscaMapaContent() {
   const [filters, setFilters] = useState<MapFilters>(DEFAULT_FILTERS);
   const [applied, setApplied] = useState<MapFilters>(DEFAULT_FILTERS);
   const [center, setCenter] = useState<[number, number] | null>(null);

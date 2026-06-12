@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRiskHeatmap } from "@/hooks/useRisk";
+import { FeatureGate } from "@/components/FeatureGate";
 
 const RiskMap = dynamic(
   () => import("@/components/RiskMap").then((m) => m.RiskMap),
@@ -16,6 +17,14 @@ const UFS = [
 ];
 
 export default function MapaPage() {
+  return (
+    <FeatureGate feature="risk_score">
+      <MapaContent />
+    </FeatureGate>
+  );
+}
+
+function MapaContent() {
   const [uf, setUf] = useState<string | undefined>(undefined);
   const { data, isLoading } = useRiskHeatmap(uf);
 

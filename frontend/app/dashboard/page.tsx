@@ -14,6 +14,26 @@ interface AdminStatus {
   alerts_sent_today: number;
 }
 
+interface DashboardAlert {
+  id: string;
+  property_id: string | null;
+  channel: string;
+  status: string;
+  created_at: string;
+}
+
+interface RadarEntry {
+  state: string;
+  bank_code: string | null;
+  property_type: string | null;
+  avg_discount_pct: number;
+}
+
+interface RadarIndexResponse {
+  period: string;
+  entries: RadarEntry[];
+}
+
 export default function DashboardPage() {
   const { data: props, isLoading } = useProperties({}, 0, 8);
   const { data: status } = useQuery<AdminStatus>({
@@ -21,6 +41,23 @@ export default function DashboardPage() {
     queryFn: () => api.get("/admin/status").then((r) => r.data),
     refetchInterval: 60_000,
   });
+  const { data: alertsData } = useQuery<{ items: DashboardAlert[] }>({
+    queryKey: ["alerts", "recent"],
+    queryFn: () => api.get("/alerts", { params: { limit: 5 } }).then((r) => r.data),
+  });
+  const { data: radarData } = useQuery<RadarIndexResponse>({
+    queryKey: ["radar-index", "dashboard"],
+    queryFn: () => api.get("/radar-index").then((r) => r.data),
+  });
+
+  const recentAlerts = alertsData?.items ?? [];
+  const radarAvg = (() => {
+    const agg = (radarData?.entries ?? []).filter(
+      (e) => e.bank_code === null && e.property_type === null
+    );
+    if (agg.length === 0) return null;
+    return agg.reduce((s, e) => s + e.avg_discount_pct, 0) / agg.length;
+  })();
 
   const kpis = [
     {
@@ -39,9 +76,9 @@ export default function DashboardPage() {
       icon: <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />,
     },
     {
-      label: "Bancos",
-      value: "1",
-      sub: "Caixa · MVP Fase 1",
+      label: "Deságio médio (Radar Index)",
+      value: radarAvg !== null ? `${radarAvg.toFixed(1)}%` : "—",
+      sub: radarData?.period ? `Período ${radarData.period}` : undefined,
       icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l9-3 9 3M3 6v12l9 3m-9-3l9 3m9-3V6m0 12l-9 3" />,
     },
   ];
@@ -165,6 +202,47 @@ export default function DashboardPage() {
                 </tbody>
               </table>
             </div>
+          )}
+        </div>
+
+        {/* Alertas recentes */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Alertas recentes</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Últimos disparos enviados a você</p>
+            </div>
+            <Link href="/alertas" className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors">
+              Ver todos
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+
+          {recentAlerts.length === 0 ? (
+            <div className="py-12 text-center text-sm text-gray-500">
+              Nenhum alerta enviado ainda.
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-800">
+              {recentAlerts.map((a) => (
+                <li key={a.id} className="flex items-center justify-between px-6 py-3.5 text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className={`inline-flex w-2 h-2 rounded-full ${a.status === "success" ? "bg-emerald-400" : "bg-red-400"}`} />
+                    {a.property_id ? (
+                      <Link href={`/imoveis/${a.property_id}`} className="text-gray-200 hover:text-blue-400 transition-colors">
+                        Imóvel {a.property_id.slice(0, 8)}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-300">Alerta</span>
+                    )}
+                    <span className="text-xs text-gray-500 capitalize">{a.channel}</span>
+                  </div>
+                  <span className="text-xs text-gray-500 tabular-nums">{formatDate(a.created_at)}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 

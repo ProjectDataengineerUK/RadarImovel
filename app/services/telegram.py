@@ -51,3 +51,19 @@ def format_property_alert(prop: dict) -> str:
         f"⭐ Score: {score}/100\n\n"
         f"🔗 <a href='{url}'>Ver imóvel na Caixa</a>"
     )
+
+
+def format_risk_change_alert(prop: dict) -> str:
+    city = prop.get("city", "")
+    state = prop.get("state", "")
+    old_score = prop.get("old_score", 0)
+    new_score = prop.get("new_score", 0)
+    delta = prop.get("delta", 0)
+    url = prop.get("official_url", "")
+
+    return (
+        f"📉 <b>Queda no risco — Radar Imóvel</b>\n\n"
+        f"📍 {city}/{state}\n"
+        f"🛡️ Score de risco: {old_score} → {new_score} (-{delta} pts)\n\n"
+        f"🔗 <a href='{url}'>Ver imóvel</a>"
+    )

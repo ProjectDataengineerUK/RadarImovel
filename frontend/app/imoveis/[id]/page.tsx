@@ -11,15 +11,20 @@ import { RiskRadarChart } from "@/components/RiskRadarChart";
 import { RiskIndicatorList } from "@/components/RiskIndicatorList";
 import { DueDiligenceButton } from "@/components/DueDiligenceButton";
 import { usePropertyRisk } from "@/hooks/useRisk";
-import { usePropertyOffers } from "@/hooks/useProperties";
+import { usePropertyOffers, usePropertyMatricula } from "@/hooks/useProperties";
 import { PriceDropForecast } from "@/components/PriceDropForecast";
 import { AskEdital } from "@/components/AskEdital";
+import { ViabilityCalculator } from "@/components/ViabilityCalculator";
+import { MatriculaSection } from "@/components/MatriculaSection";
+import { usePlan } from "@/hooks/usePlan";
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError } = useProperty(id);
   const { data: riskScore } = usePropertyRisk(id);
   const { data: offersData } = usePropertyOffers(id);
+  const { data: matricula } = usePropertyMatricula(id);
+  const { hasFeature } = usePlan();
 
   if (isLoading) return <div className="p-8 text-gray-500">Carregando...</div>;
   if (isError || !data) return <div className="p-8 text-red-500">Imóvel não encontrado.</div>;
@@ -102,9 +107,15 @@ export default function PropertyDetailPage() {
 
       {edital_processed && edital && <EditalSection edital={edital} />}
 
-      <PriceDropForecast propertyId={id} />
+      {hasFeature("calculator") && <ViabilityCalculator propertyId={id} />}
 
-      {edital_processed && <AskEdital propertyId={id} />}
+      <div className="rounded-xl border p-6">
+        <MatriculaSection matricula={matricula ?? null} />
+      </div>
+
+      {hasFeature("price_forecast") && <PriceDropForecast propertyId={id} />}
+
+      {edital_processed && hasFeature("ask") && <AskEdital propertyId={id} />}
 
       {riskScore && (
         <div className="space-y-4 rounded-xl border p-6">
@@ -112,7 +123,7 @@ export default function PropertyDetailPage() {
             <h2 className="text-lg font-semibold">Risco do Imóvel</h2>
             <div className="flex items-center gap-3">
               <RiskScoreBadge score={riskScore} size="lg" />
-              <DueDiligenceButton propertyId={id} />
+              {hasFeature("due_diligence_pdf") && <DueDiligenceButton propertyId={id} />}
             </div>
           </div>
           <RiskRadarChart score={riskScore} />
