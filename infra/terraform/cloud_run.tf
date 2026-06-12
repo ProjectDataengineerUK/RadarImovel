@@ -183,7 +183,148 @@ resource "google_cloud_run_v2_job" "process_matriculas" {
       timeout         = "600s"
       containers {
         image   = local.placeholder
-        command = ["python", "jobs/process_matriculas.py"]
+        command = ["python", "-m", "jobs.process_matriculas"]
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_cloud_run_v2_job" "enrich_details" {
+  name     = "radar-enrich-details"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "3600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.enrich_details"]
+        env {
+          name  = "BANK"
+          value = "caixa"
+        }
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_cloud_run_v2_job" "load_geodata" {
+  name     = "radar-load-geodata"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "3600s"
+      containers {
+        image     = local.placeholder
+        command   = ["python", "-m", "jobs.load_geodata"]
+        resources {
+          limits = {
+            memory = "4Gi"
+            cpu    = "2"
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_cloud_run_v2_job" "expire_subscriptions" {
+  name     = "radar-expire-subscriptions"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "300s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.expire_subscriptions"]
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
+# ── Onda 4: previsão de queda de preço ───────────────────────────────────────
+resource "google_cloud_run_v2_job" "predict_drops" {
+  name     = "radar-predict-drops"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "3600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.predict_drops"]
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_cloud_run_v2_job" "build_radar_index" {
+  name     = "radar-build-index"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "1800s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.build_radar_index"]
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_cloud_run_v2_job" "collect_source" {
+  name     = "radar-collect-source"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "3600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.collect_source"]
+        env {
+          name  = "SOURCE"
+          value = ""
+        }
       }
     }
   }

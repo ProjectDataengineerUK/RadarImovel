@@ -250,6 +250,93 @@ jobs:
             && gcloud run jobs update radar-load-geodata "${BASE_FLAGS[@]}" \
             || gcloud run jobs create radar-load-geodata "${BASE_FLAGS[@]}"
 
+      - name: Update radar-process-matriculas image
+        run: |
+          BASE_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }}"
+            --set-secrets="DB_PASSWORD=db_password:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
+            --project=${{ env.PROJECT_ID }}
+            --command="python,-m,jobs.process_matriculas"
+            --max-retries=1
+            --task-timeout=600s
+          )
+          gcloud run jobs describe radar-process-matriculas --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-process-matriculas "${BASE_FLAGS[@]}" \
+            || gcloud run jobs create radar-process-matriculas "${BASE_FLAGS[@]}"
+
+      - name: Update radar-expire-subscriptions image
+        run: |
+          BASE_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }}"
+            --set-secrets="DB_PASSWORD=db_password:latest"
+            --project=${{ env.PROJECT_ID }}
+            --command="python,-m,jobs.expire_subscriptions"
+            --max-retries=1
+            --task-timeout=300s
+          )
+          gcloud run jobs describe radar-expire-subscriptions --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-expire-subscriptions "${BASE_FLAGS[@]}" \
+            || gcloud run jobs create radar-expire-subscriptions "${BASE_FLAGS[@]}"
+
+      # ── Onda 4 ─────────────────────────────────────────────────────────────
+
+      - name: Update radar-predict-drops image
+        run: |
+          BASE_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }}"
+            --set-secrets="DB_PASSWORD=db_password:latest"
+            --project=${{ env.PROJECT_ID }}
+            --command="python,-m,jobs.predict_drops"
+            --max-retries=1
+            --task-timeout=3600s
+          )
+          gcloud run jobs describe radar-predict-drops --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-predict-drops "${BASE_FLAGS[@]}" \
+            || gcloud run jobs create radar-predict-drops "${BASE_FLAGS[@]}"
+
+      - name: Update radar-build-index image
+        run: |
+          BASE_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},GCS_BUCKET_RAW=radar-raw"
+            --set-secrets="DB_PASSWORD=db_password:latest"
+            --project=${{ env.PROJECT_ID }}
+            --command="python,-m,jobs.build_radar_index"
+            --max-retries=1
+            --task-timeout=1800s
+          )
+          gcloud run jobs describe radar-build-index --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-build-index "${BASE_FLAGS[@]}" \
+            || gcloud run jobs create radar-build-index "${BASE_FLAGS[@]}"
+
+      - name: Update radar-collect-source image
+        run: |
+          BASE_FLAGS=(
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPO }}/job:${{ github.sha }}
+            --region=${{ env.REGION }}
+            --service-account=${{ env.JOB_SA }}
+            --set-env-vars="CLOUD_SQL_INSTANCE=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=${{ env.DB_USER }},DB_NAME=${{ env.DB_NAME }},PUBSUB_PROJECT_ID=${{ env.PROJECT_ID }},GCS_BUCKET_RAW=radar-raw,SOURCE="
+            --set-secrets="DB_PASSWORD=db_password:latest,TELEGRAM_BOT_TOKEN=telegram_bot_token:latest,FIREBASE_CREDENTIALS_JSON=firebase_credentials_json:latest"
+            --project=${{ env.PROJECT_ID }}
+            --command="python,-m,jobs.collect_source"
+            --max-retries=1
+            --task-timeout=3600s
+          )
+          gcloud run jobs describe radar-collect-source --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null \
+            && gcloud run jobs update radar-collect-source "${BASE_FLAGS[@]}" \
+            || gcloud run jobs create radar-collect-source "${BASE_FLAGS[@]}"
+
       # ── Run migrations ──────────────────────────────────────────────────────
 
       - name: Run database migrations
