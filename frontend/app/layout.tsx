@@ -8,11 +8,12 @@ import Link from "next/link";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlan } from "@/hooks/usePlan";
 import "./globals.css";
 
 const AUTH_ROUTES = ["/login", "/register"];
 
-const NAV = [
+const NAV_PUBLIC = [
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -28,6 +29,15 @@ const NAV = [
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+    ),
+  },
+  {
+    href: "/radar-index",
+    label: "Radar Index",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
   },
@@ -52,9 +62,59 @@ const NAV = [
   },
 ];
 
+const NAV_PRO = [
+  {
+    href: "/carteira",
+    label: "Carteira",
+    feature: "portfolio",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    ),
+  },
+  {
+    href: "/mapa",
+    label: "Mapa de Risco",
+    feature: "risk_score",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+    ),
+  },
+  {
+    href: "/busca-mapa",
+    label: "Busca por Mapa",
+    feature: "risk_score",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    ),
+  },
+];
+
+function NavLink({ href, label, icon, active }: { href: string; label: string; icon: React.ReactNode; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+        active
+          ? "bg-blue-600/15 text-blue-400 font-medium"
+          : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+      }`}
+    >
+      <span className={active ? "text-blue-400" : "text-gray-500"}>{icon}</span>
+      {label}
+    </Link>
+  );
+}
+
 function Sidebar() {
   const path = usePathname();
   const { user, logout } = useAuth();
+  const { role, hasFeature } = usePlan();
 
   return (
     <aside className="w-60 min-h-screen bg-gray-900 border-r border-gray-800 flex flex-col shrink-0">
@@ -75,23 +135,40 @@ function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, label, icon }) => {
-          const active = path === href || path?.startsWith(href + "/");
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                active
-                  ? "bg-blue-600/15 text-blue-400 font-medium"
-                  : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
-              }`}
-            >
-              <span className={active ? "text-blue-400" : "text-gray-500"}>{icon}</span>
-              {label}
-            </Link>
-          );
-        })}
+        {NAV_PUBLIC.map(({ href, label, icon }) => (
+          <NavLink key={href} href={href} label={label} icon={icon} active={path === href || path?.startsWith(href + "/")} />
+        ))}
+
+        {/* Pro/Premium features */}
+        {NAV_PRO.some(({ feature }) => hasFeature(feature)) && (
+          <div className="pt-3 pb-1 px-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600">Pro</p>
+          </div>
+        )}
+        {NAV_PRO.map(({ href, label, icon, feature }) =>
+          hasFeature(feature) ? (
+            <NavLink key={href} href={href} label={label} icon={icon} active={path === href || path?.startsWith(href + "/")} />
+          ) : null
+        )}
+
+        {/* Admin */}
+        {role === "admin" && (
+          <>
+            <div className="pt-3 pb-1 px-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600">Admin</p>
+            </div>
+            <NavLink
+              href="/admin"
+              label="Painel Admin"
+              active={path?.startsWith("/admin") ?? false}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              }
+            />
+          </>
+        )}
       </nav>
 
       {/* User */}
