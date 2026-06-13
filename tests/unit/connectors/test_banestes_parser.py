@@ -1,33 +1,71 @@
-from datetime import date
+"""Tests para BanestesParser usando PDF real de edital (leilao-imovel-010-2026)."""
 from decimal import Decimal
 from pathlib import Path
 
 from app.connectors.banestes import BanestesConnector
 
 FIXTURES = Path(__file__).parents[2] / "fixtures" / "html"
+PDF_URL = "https://www.banestes.com.br/publicacoes_legais/arquivos_colic/2026/leilao-imovel-010-2026.pdf"
 
 
-def test_banestes_pdf_extracts_three():
+def _props():
     raw = (FIXTURES / "banestes_edital.pdf").read_bytes()
-    props = list(BanestesConnector().parse(raw, "https://www.banestes.com.br/edital07.pdf"))
-    assert len(props) == 3
+    return list(BanestesConnector().parse(raw, PDF_URL))
+
+
+def test_banestes_pdf_extracts_rows():
+    props = _props()
+    assert len(props) >= 4
     assert all(p.bank_code == "banestes" for p in props)
+    assert all(p.source_name == "banestes_edital_pdf" for p in props)
 
 
-def test_banestes_normalize_edital_meta():
-    raw = (FIXTURES / "banestes_edital.pdf").read_bytes()
-    p = list(BanestesConnector().parse(raw, "https://www.banestes.com.br/edital07.pdf"))[0]
-    norm = BanestesConnector().normalize(p)
+def test_banestes_pdf_numeric_external_codes():
+    props = _props()
+    codes = [p.external_code for p in props]
+    assert "1" in codes
+    assert "2" in codes
+    assert "3" in codes
+    assert "4" in codes
+
+
+def test_banestes_state_es():
+    props = _props()
+    norms = [BanestesConnector().normalize(p) for p in props]
+    for n in norms:
+        assert n["state"] == "ES", f"Unexpected state: {n['state']} for {n['external_code']}"
+
+
+def test_banestes_first_property():
+    props = _props()
+    lote1 = next(p for p in props if p.external_code == "1")
+    norm = BanestesConnector().normalize(lote1)
     assert norm["bank_code"] == "banestes"
-    assert norm["city"] == "Vitória"
+    assert norm["city"] == "Anchieta"
     assert norm["state"] == "ES"
+    assert norm["current_value"] == Decimal("8900000.00")
     assert norm["sale_modality"] == "Leilão"
-    assert norm["edital_number"] == "07/2026"
-    assert norm["auction_date"] == date(2026, 8, 22)
-    assert norm["current_value"] == Decimal("280000.00")
+    assert norm["occupancy_status"] == "Desocupado"
+
+
+def test_banestes_edital_number():
+    props = _props()
+    for p in props[:4]:
+        norm = BanestesConnector().normalize(p)
+        assert norm["edital_number"] == "010/2026"
+
+
+def test_banestes_official_url():
+    props = _props()
+    for p in props[:4]:
+        assert p.raw_data["official_url"] == PDF_URL
 
 
 def test_banestes_index_html_yields_nothing():
     html = b"<html><body><a href='/edital07.pdf'>Edital</a></body></html>"
     props = list(BanestesConnector().parse(html, "https://www.banestes.com.br/leiloes-e-vendas"))
     assert props == []
+
+
+def test_banestes_empty_bytes():
+    assert list(BanestesConnector().parse(b"", PDF_URL)) == []
