@@ -1,8 +1,21 @@
-"""Parser HTML do portal de imóveis do Banco do Brasil.
+"""Parser seuimovelbb.com.br — página inicial SSR com cards div.card.carta.
 
-Defensivo: cada campo em try/except; campos ausentes geram logger.warning e
-seguem como None. Nunca crash por campo faltando.
+Estrutura real do card:
+  <div class="card carta">
+    <a href="/imovel/id/10050">...</a>          — link do imóvel
+    <div class="tipo"><i>...</i> Prédio</div>   — tipo
+    <div class="valor">R$ 31.956.084,00</div>   — valor
+    <div class="localidade"><i>...</i> Rio de Janeiro, RJ</div>
+    <div class="leilao [d-none hidden]">Leilão - ID 74833</div>
+    <div class="leilao [d-none hidden]">Terça, 23/06 às 11h</div>
+    <div class="leilao [d-none hidden]">Venda direta - ID 74833</div>
+    <i onclick="_compartilhar('ID74833 ...', 'http://seuimovelbb.com.br/imovel/id/10050');"></i>
+    <div class="parceiro">Parceiro: Escritório de Leilões</div>
+  </div>
+
+O BB ID real (ex: "74833") está no onclick de _compartilhar: match ID seguido de digitos.
 """
+import re
 from collections.abc import Iterator
 
 from bs4 import BeautifulSoup
@@ -10,53 +23,19 @@ from bs4 import BeautifulSoup
 from app.connectors.base import RawProperty
 from app.core.logging import logger
 
-# Seletores são hipóteses; ajustáveis sem tocar no resto do connector.
-_CARD_SELECTORS = ["div.imovel", "div.card-imovel", "tr.imovel", "li.imovel"]
-_FIELD_SELECTORS = {
-    "external_code": ["[data-codigo]", ".codigo", ".cod-imovel"],
-    "title": [".titulo", ".tipo-imovel", "h3", "h2"],
-    "address": [".endereco", ".logradouro"],
-    "neighborhood": [".bairro"],
-    "city": [".cidade", ".municipio"],
-    "state": [".uf", ".estado"],
-    "current_value": [".valor", ".preco", ".valor-venda"],
-    "appraisal_value": [".avaliacao", ".valor-avaliacao"],
-    "discount_percent": [".desconto"],
-}
+_BASE_URL = "https://seuimovelbb.com.br"
+_BB_ID_RE = re.compile(r"_compartilhar\('ID(\d+)", re.IGNORECASE)
+_CITY_STATE_RE = re.compile(r"^(.+),\s*([A-Z]{2})$")
 
 
-def _first_text(node, selectors: list[str]) -> str | None:
-    for sel in selectors:
-        try:
-            found = node.select_one(sel)
-        except Exception:
-            found = None
-        if found is not None:
-            text = found.get_text(" ", strip=True)
-            if text:
-                return text
-    return None
+def _visible(tag) -> bool:
+    classes = tag.get("class", [])
+    return "d-none" not in classes and "hidden" not in classes
 
 
-def _find_cards(soup: BeautifulSoup) -> list:
-    for sel in _CARD_SELECTORS:
-        cards = soup.select(sel)
-        if cards:
-            return cards
-    return []
-
-
-def _extract_url(node, base_url: str) -> str | None:
-    try:
-        link = node.select_one("a[href]")
-        if link and link.get("href"):
-            href = str(link["href"]).strip()
-            if href.startswith("http"):
-                return href
-            return base_url.rsplit("/", 1)[0] + "/" + href.lstrip("/")
-    except Exception:
-        return None
-    return None
+def _text(tag, selector: str) -> str:
+    el = tag.select_one(selector)
+    return el.get_text(strip=True) if el else ""
 
 
 class BBParser:
@@ -72,34 +51,77 @@ class BBParser:
             logger.error("bb.parser.soup_failed", source_url=source_url, error=str(exc))
             return
 
-        cards = _find_cards(soup)
+        cards = soup.find_all("div", class_=["card", "carta"])
         if not cards:
-            logger.warning("bb.parser.no_cards", source_url=source_url)
+            logger.warning("bb.parser.no_cards", source_url=source_url, hint="div.card.carta")
             return
 
+        found = 0
         for idx, card in enumerate(cards):
             try:
-                raw_data: dict = {}
-                for field, selectors in _FIELD_SELECTORS.items():
-                    value = _first_text(card, selectors)
-                    if value is None and field in ("external_code", "city"):
-                        logger.warning("bb.parser.field_missing", field=field, index=idx)
-                    raw_data[field] = value
+                link = card.find("a", href=lambda h: h and "/imovel/id/" in h)
+                if not link:
+                    continue
+                href = str(link["href"]).strip()
+                website_id = href.rstrip("/").split("/")[-1]
+                official_url = _BASE_URL + href
 
-                external_code = (raw_data.get("external_code") or "").strip()
-                if not external_code:
-                    code_attr = card.get("data-codigo") if hasattr(card, "get") else None
-                    external_code = str(code_attr).strip() if code_attr else f"bb-{idx}"
+                # BB internal ID from the compartilhar onclick
+                share_el = card.find("i", onclick=True)
+                onclick = str(share_el.get("onclick", "")) if share_el else ""
+                m = _BB_ID_RE.search(onclick)
+                external_code = m.group(1) if m else website_id
 
-                raw_data["external_code"] = external_code
-                raw_data["official_url"] = _extract_url(card, source_url) or source_url
+                tipo = _text(card, "div.tipo")
+                valor = _text(card, "div.valor")
+                localidade = _text(card, "div.localidade")
+
+                city = state = ""
+                loc_m = _CITY_STATE_RE.match(localidade)
+                if loc_m:
+                    city = loc_m.group(1).strip()
+                    state = loc_m.group(2).strip()
+
+                sale_modality = ""
+                auction_date = ""
+                for ld in card.find_all("div", class_="leilao"):
+                    if not _visible(ld):
+                        continue
+                    text = ld.get_text(" ", strip=True)
+                    if "Leil" in text:
+                        sale_modality = "Leilão"
+                    elif "Venda direta" in text:
+                        sale_modality = "Venda direta"
+                    elif text:
+                        auction_date = text
+
+                parceiro = _text(card, "div.parceiro").removeprefix("Parceiro:").strip()
+
+                raw_data = {
+                    "external_code": external_code,
+                    "website_id": website_id,
+                    "title": tipo,
+                    "current_value": valor,
+                    "city": city,
+                    "state": state,
+                    "sale_modality": sale_modality or "Venda direta",
+                    "auction_date": auction_date,
+                    "partner": parceiro,
+                    "official_url": official_url,
+                }
 
                 yield RawProperty(
                     external_code=external_code,
                     source_url=source_url,
                     raw_data=raw_data,
                     bank_code=self.BANK_CODE,
-                    source_name="bb_portal",
+                    source_name="bb_seuimovelbb",
                 )
+                found += 1
             except Exception as exc:
                 logger.error("bb.parser.card_failed", index=idx, error=str(exc))
+
+        if found == 0:
+            logger.warning("bb.parser.no_listings", source_url=source_url)
+        else:
+            logger.info("bb.parser.done", count=found, source_url=source_url)

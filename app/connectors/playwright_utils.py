@@ -13,12 +13,14 @@ _USER_AGENT = (
 def fetch_with_playwright(
     url: str,
     wait_until: str = "networkidle",
+    wait_selector: str | None = None,
     timeout_ms: int = 30_000,
 ) -> bytes:
     """Render a URL with headless Chromium and return the full page HTML.
 
-    Returns b"" when Playwright is unavailable (not installed or DISABLE_PLAYWRIGHT=true).
-    Callers should fall back to httpx when this returns empty.
+    wait_selector: optional CSS selector to wait for before capturing HTML
+                   (useful for SPAs that render content after networkidle).
+    Returns b"" when Playwright is unavailable or DISABLE_PLAYWRIGHT=true.
     """
     if os.environ.get("DISABLE_PLAYWRIGHT", "").lower() == "true":
         return b""
@@ -35,6 +37,8 @@ def fetch_with_playwright(
             context = browser.new_context(user_agent=_USER_AGENT, locale="pt-BR")
             page = context.new_page()
             page.goto(url, wait_until=wait_until, timeout=timeout_ms)
+            if wait_selector:
+                page.wait_for_selector(wait_selector, timeout=timeout_ms)
             content = page.content().encode("utf-8")
             browser.close()
             logger.info("playwright.fetch_ok", url=url, size=len(content))

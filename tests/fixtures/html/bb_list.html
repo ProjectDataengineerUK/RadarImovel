@@ -1,41 +1,1749 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><title>Imóveis BB</title></head>
-<body>
-  <div class="lista-imoveis">
-    <div class="imovel" data-codigo="BB-1001">
-      <span class="codigo">BB-1001</span>
-      <h3 class="titulo">Apartamento, 78m², 2 quartos</h3>
-      <span class="endereco">Rua das Flores, 100</span>
-      <span class="bairro">Centro</span>
-      <span class="cidade">Goiânia</span>
-      <span class="uf">GO</span>
-      <span class="valor">R$ 180.000,00</span>
-      <span class="avaliacao">R$ 240.000,00</span>
-      <a href="/imovel/BB-1001">Ver detalhes</a>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=yes">
+        <meta name="apple-mobile-web-app-title" content="Seu Imóvel BB">
+        <meta name="application-name" content="Seu Imóvel BB">
+        <meta property="og:site_name" content="Seu Imóvel BB">
+        <meta property="og:type" content="website">
+        <meta property="og:image:alt" content="Seu Imóvel BB :: Seu Imóvel BB">
+        <meta name="copyright" content="2026 © Seu Imóvel BB - Todos os direitos reservados">
+        <meta name="audience" content="all">
+        <meta name="description" content="Seu Imóvel BB">
+        <meta name="robots" content="index, follow">
+        <title>Seu Imóvel BB :: Seu Imóvel BB</title>
+        <link type="text/css" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" rel="stylesheet" integrity="sha512-yHknP1/AwR+yx26cB1y0cjvQUMvEa2PFzt1c9LlS4pRQ5NOTZFWbhBig+X9G9eYW/8m0/4OXNx8pxJ6z57x0dw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" rel="stylesheet" integrity="sha512-17EgCFERpgZKcm0j0fEq1YCJuyAWdz9KUtv1EjVuaOz8pDnh/0nZxmU6BBXwaaxqoi9PQXnRWqlcDB027hgv9A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.min.css">        <link href="css/range_vs_1.css" rel="stylesheet">        <link href="css/base_vs_14.css" rel="stylesheet">
+        <link href="css/index_vs_1.css" rel="stylesheet">    </head>
+    <body>
+                <div class="container-fluid box-top">
+            <div class="container ctn-limit pt-md-1">
+                <div class="row">
+                    <div class="col-lg-6 col-md-10 d-flex block-left pt-md-1">
+                        <span class="logomarca"><a href="/"><img class="image-top" src="/imagem/conteudo/lg-padrao.png?1"></a></span>
+                        <span class="pesquisa">
+                            <div class="input-group py-0 my-0">
+                                <span class="input-group-text icone pointer" onClick="_buscar();"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control border-0 campo" placeholder="Pesquise um imóvel" aria-label="Pesquise um imóvel" id="_pesquisa" value="">
+                            </div>
+                        </span>
+                    </div>
+                    <div class="col-lg-6 col-md-2 col-12 px-0">
+                        <nav class="navbar navbar-expand-lg navbar-light bg-transparent d-flex justify-lg-content-end justify-content-between">
+                            <a class="navbar-brand d-md-none ps-2 pt-0" href="/" title="Menu">
+                                <span class="logomarca pt-0"><img class="image-top" src="/imagem/conteudo/lg-padrao.png"></span>
+                            </a>
+                            <span class="icone-pesquisa pointer" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside"><i class="bi bi-search"></i></span>
+                            <div class="dropdown">
+                                <form class="dropdown-menu dropdown-menu-end dropdown-search p-4">
+                                    <div class="mb-3">
+                                        <div class="input-group">
+                                            <span class="input-group-text icone pointer" onClick="_buscar();"><i class="bi bi-search"></i></span>
+                                            <input type="text" class="form-control border-0 campo" placeholder="Pesquise um imóvel" aria-label="Pesquise um imóvel" id="_pesquisa-mb" value="">
+                                        </div>
+                                    </div>
+                                    <a class="btn btn-busca" onClick="_buscar();"><i class="bi bi-search"></i> Buscar</a>
+                                </form>
+                            </div>
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-bar" aria-controls="menu-bar">
+                                <i class="bi bi-list"></i>
+                            </button>
+                            <div class="collapse navbar-collapse justify-content-end" id="menu-bar">
+                                <ul class="navbar-nav">
+                                    <li class="class-item nav-color w-sm-100 border-sm-bottom closer">
+                                        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#menu-bar" aria-controls="menu-bar"><i class="bi bi-x-lg"></i></a>
+                                    </li>
+                                    <li class="class-item nav-color w-sm-100 border-sm-bottom d-flex justify-content-lg-end justify-content-between align-items-center">
+                                        <a class="nav-link ps-sm-0" href="/catalogo/texto/locação">Venda com Locação</a> <a class="arrow"><i class="bi bi-chevron-right"></i></a>
+                                    </li>
+                                    <li class="class-item nav-color w-sm-100 border-sm-bottom d-flex justify-content-lg-end justify-content-between align-items-center">
+                                        <a class="nav-link ps-sm-0" href="/catalogo/categoria/urbanos">Imóveis Urbanos</a> <a class="arrow"><i class="bi bi-chevron-right"></i></a>
+                                    </li>
+                                    <li class="class-item nav-color w-sm-100 border-sm-bottom d-flex justify-content-lg-end justify-content-between align-items-center">
+                                        <a class="nav-link ps-sm-0" href="/catalogo/categoria/rurais">Imóveis Rurais</a> <a class="arrow"><i class="bi bi-chevron-right"></i></a>
+                                    </li>
+                                    <li class="class-item nav-color w-sm-100 border-sm-bottom d-flex justify-content-lg-end justify-content-between align-items-center">
+                                        <a class="nav-link ps-sm-0" href="/quem-somos">Quem somos</a> <a class="arrow"><i class="bi bi-chevron-right"></i></a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+                <div class="container-fluid box-banner">
+            <input type="hidden" id="_banners-dots" value="3">
+            <div class="d-block slick-banners">
+                                <!--
+                <div class="d-block slick-banner banner-black-friday">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12 d-flex">
+                                    <div class="logo-suacesta">
+                                        <img src="/imagem/acervo/suacesta-black-friday.svg" width="180" alt="Sua Cesta de Imóveis BB" class="pt-2">
+                                    </div>
+                                    <div class="texto-suacesta">
+                                        <h6 class="slick-banner-h6 black-friday-modalidade">MODALIDADE</h6>
+                                        <h1 class="slick-banner-h1 black-friday-h1">Aceita BB? <img src="/imagem/acervo/friday-contorno.svg" alt="Friday" class="d-inline-friday"></h1>
+                                        <h6 class="slick-banner-h6 black-friday-h6">Condições exclusivas e ainda melhores para você escolher o imóvel e fazer sua melhor oferta.</h6>
+                                        <a class="btn btn-yellow text-center btn-banner mt-md-2" href="/catalogo/tipo-venda/10">VER IMÓVEIS</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="d-block slick-banner banner-esquenta">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12 d-flex">
+                                    <div class="logo-suacesta">
+                                        <img src="/imagem/acervo/suacesta-amarelo.svg" width="180" alt="Sua Cesta de Imóveis BB" class="pt-2">
+                                    </div>
+                                    <div class="texto-suacesta">
+                                        <h1 class="slick-banner-h1 esquenta-h1">A Sua Cesta de Imóveis BB está de volta, totalmente repaginada!</h1>
+                                        <h6 class="slick-banner-h6 esquenta-h6">Centenas de imóveis disponíveis em duas modalidades exclusivas de compra: "Aceita BB?" e "Descontos Progressivos".</h6>
+                                        <a class="btn btn-yellow text-center btn-banner mt-md-2" href="#" onclick="$('#esquenta-cesta-sibb').click();">CONHECER</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="d-block slick-banner banner-esquenta">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12 d-flex">
+                                    <div class="logo-suacesta">
+                                        <img src="/imagem/acervo/suacesta-amarelo.svg" width="180" alt="Sua Cesta de Imóveis BB" class="pt-2">
+                                    </div>
+                                    <div class="texto-suacesta">
+                                        <h1 class="slick-banner-h1 esquenta-h1">A Sua Cesta de Imóveis BB está de volta, totalmente repaginada!</h1>
+                                        <h6 class="slick-banner-h6 esquenta-h6">Centenas de imóveis disponíveis em duas modalidades exclusivas de compra: "Aceita BB?" e "Descontos Progressivos".</h6>
+                                        <a class="btn btn-yellow text-center btn-banner mt-md-2" href="#" onclick="$('#esquenta-cesta-sibb').click();">CONHECER</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="d-block slick-banner banner-desconto-progressivo">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12 d-flex">
+                                    <div class="logo-suacesta">
+                                        <img src="/imagem/acervo/suacesta-amarelo.svg" width="180" alt="Sua Cesta de Imóveis BB" class="pt-2">
+                                    </div>
+                                    <div class="texto-suacesta">
+                                        <h5 class="slick-banner-h5 desconto-progressivo-h5">MODALIDADE</h5>
+                                        <h1 class="slick-banner-h1">Descontos progressivos</h1>
+                                        <h6 class="slick-banner-h6 desconto-progressivo-h6">Você adquire imóveis em lotes e aproveita descontos extras e progressivos. Mais imóveis, mais descontos.</h6>
+                                        <a class="btn btn-yellow text-center btn-banner mt-md-2" href="/catalogo/categoria/desconto-progressivo" target="_blank">VER IMÓVEIS</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="d-block slick-banner banner-aceita-bb">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12 d-flex">
+                                    <div class="logo-suacesta">
+                                        <img src="/imagem/acervo/sua-cesta-azul.png" width="180" alt="Sua Cesta de Imóveis BB" class="pt-2">
+                                    </div>
+                                    <div class="texto-suacesta">
+                                        <h5 class="slick-banner-h5 aceita-bb-h5">MODALIDADE</h5>
+                                        <h1 class="slick-banner-h1 aceita-bb-h1">Aceita BB?</h1>
+                                        <h6 class="slick-banner-h6 aceita-bb-h6">Condições exclusivas: você escolhe o imóvel, faz a sua oferta e o BB analisa sua proposta.</h6>
+                                        <a class="btn btn-yellow text-center btn-banner-azul mt-md-2" href="/catalogo/categoria/aceita-bb" target="_blank">VER IMÓVEIS</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                -->
+                
+                <div class="d-block slick-banner banner-aceita">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h1 class="slick-banner-h1 aceita-h1">Aceita BB?</h1>
+                                    <h6 class="slick-banner-h6 aceita-h6">Você seleciona o imóvel desejado, faz sua oferta e BB analisa se aceita.</h6>
+                                    <a class="btn btn-yellow text-center btn-banner" href="/catalogo/categoria/aceita-bb" target="_blank">VER OS IMÓVEIS</a>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="d-block slick-banner banner-locacao">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h1 class="slick-banner-h1 locacao-h1">Imóveis comerciais com locação simultânea</h1>
+                                    <h6 class="slick-banner-h6">Venda de prédios comerciais em vários estados, com rentabilidade mensal.</h6>
+                                    <a class="btn btn-yellow text-center btn-banner" href="/catalogo/categoria/venda-com-locacao" target="_blank">ACESSAR</a>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="d-block slick-banner banner-urbano">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h1 class="slick-banner-h1">Imóveis urbanos com até 70% de desconto</h1>
+                                    <h6 class="slick-banner-h6">Conheça os imóveis urbanos do BB à venda na sua região.</h6>
+                                    <a class="btn btn-yellow text-center px-4 btn-banner" href="/catalogo/categoria/urbanos" target="_blank">CONHECER</a>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="d-block slick-banner banner-rural">
+                    <span class="d-block d-flex justify-content-center">
+                        <div class="container d-flex align-items-center justify-content-start">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h1 class="slick-banner-h1 rural-h1">Imóveis rurais: consulte nossas oportunidades</h1>
+                                    <h6 class="slick-banner-h6"> </h6>
+                                    <a class="btn btn-yellow text-center btn-banner" href="/catalogo/categoria/rurais" target="_blank">VER IMÓVEIS</a>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+
+            </div>
+            <div class="container box-search">
+                <div class="row pb-1">
+                    <div class="col-12 d-lg-flex justify-content-lg-between justify-content-center pe-0">
+                        <div class="dropdown inline tipo-venda">
+                            <a class="btn dropdown-toggle d-flex align-items-center" href="#"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="drop-icon"><i class="bi bi-buildings icone0 me-2"></i></div><div class="drop-label" id="_tipo-venda" aria-details="-">Tipo de venda</div><div class="drop-chevron"><i class="bi bi-chevron-down mx-2"></i></div>
+                            </a>
+                            <ul class="dropdown-menu corpo-tipo-venda">
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '0')" id="opcaoTipoVenda0">Leilão</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '1')" id="opcaoTipoVenda1">Venda direta</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '2')" id="opcaoTipoVenda2">Leilão alienação fiduciária</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '3')" id="opcaoTipoVenda3">Leilão com locação simultânea</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '4')" id="opcaoTipoVenda4">Venda direta com locação simultânea</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '5')" id="opcaoTipoVenda5">Leilão Descontos Progressivos</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '6')" id="opcaoTipoVenda6">Leilão Aceita BB?</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '7')" id="opcaoTipoVenda7">Venda direta Descontos Progressivos</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '8')" id="opcaoTipoVenda8">Venda direta Aceita BB?</a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '9')" id="opcaoTipoVenda9">Leilão Aceita BB?<i class="tipo-venda-friday ms-2">Friday</i></a></li>
+                                <li><a class="dropdown-item pointer" onClick="_selecionarFiltro(this, 0, '10')" id="opcaoTipoVenda10">Venda direta Aceita BB? <i class="tipo-venda-friday ms-2">Friday</i></a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown inline preco">
+                            <a class="btn dropdown-toggle d-flex align-items-center" href="#"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="drop-icon"><i class="bi bi-currency-dollar icone0 me-2"></i></div><div class="drop-label" id="_preco" aria-details="">Preço</div><div class="drop-chevron"><i class="bi bi-chevron-down mx-2"></i></div>
+                            </a>
+                            <ul class="dropdown-menu corpo-preco">
+                                <div class="d-block">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="filtro-preco-rotulo">Preço mínimo (R$)</div>
+                                            <input type="text" class="form-control form-control-currency mt-2" aria-label="Mínimo" id="valorMinimo" value="0" aria-details="0"  onkeypress="return _eDigito(event);">
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="filtro-preco-rotulo">Preço máximo (R$)</div>
+                                            <input type="text" class="form-control form-control-currency mt-2" aria-label="Máximo" id="valorMaximo" value="50.947.127" aria-details="50947127" onkeypress="return _eDigito(event);">
+                                        </div>
+                                    </div>
+                                    <div class="row py-0">
+                                        <div class="col-12 pt-4 pb-2 px-3">
+                                            <div class="slider-range" id="slider-range"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ul>
+                        </div>
+                        <div class="dropdown inline categoria">
+                            <a class="btn dropdown-toggle d-flex align-items-center" href="#"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="drop-icon"><i class="bi bi-buildings icone0 me-2"></i></div><div class="drop-label" id="_categoria" aria-details="-">Tipo de imóvel</div><div class="drop-chevron"><i class="bi bi-chevron-down mx-2"></i></div>
+                            </a>
+                            <ul class="dropdown-menu corpo-categoria" id="__categoria"></ul>
+                        </div>
+                        <div class="dropdown inline estado">
+                            <a class="btn dropdown-toggle d-flex align-items-center" href="#"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="drop-icon"><i class="bi bi-geo-alt icone0 me-2"></i></div><div class="drop-label" id="_estado" aria-details="-">Estado</div><div class="drop-chevron"><i class="bi bi-chevron-down mx-2"></i></div>
+                            </a>
+                            <ul class="dropdown-menu" id="__estado"></ul>
+                        </div>
+                        <div class="dropdown inline cidade">
+                            <a class="btn dropdown-toggle d-flex align-items-center" href="#"  role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="drop-icon"><i class="bi bi-geo-alt icone0 me-2"></i></div><div class="drop-label" id="_cidade" aria-details="-">Cidade</div><div class="drop-chevron"><i class="bi bi-chevron-down mx-2"></i></div>
+                            </a>
+                            <ul class="dropdown-menu" id="__cidade"></ul>
+                        </div>
+                        <div class="inline inline-md">
+                            <a class="btn btn-buscar text-center" href="#" onclick="_filtrar();"><i class="bi bi-search icone1"></i> Buscar</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-lg-4 pt-2">
+                    <div class="col-12 d-lg-flex align-items-lg-center justify-content-lg-between pe-0">
+                        <div class="categorias inline coluna-1 me-lg-0">Categorias mais buscadas:</div>
+                        <div class="inline coluna-2 me-lg-0 d-lg-flex align-items-lg-center justify-content-lg-between">
+                            <div class="categoria-item inline" id="categoria-item0" onclick="_va('/catalogo/texto/locação')"><i class="ph ph-buildings icone2 me-lg-1"></i> Comercial/Locação <span id="contador0" class="contador">49</span></div>
+                            <div class="categoria-item inline" id="categoria-item1" onclick="_va('/catalogo/categoria/11')"><i class="ph ph-building icone2 me-lg-1"></i> Apartamento <span id="contador1" class="contador">99</span></div>
+                            <div class="categoria-item inline" id="categoria-item2" onclick="_va('/catalogo/categoria/13')"><i class="ph ph-house icone2 me-lg-1"></i> Casa <span id="contador2" class="contador">272</span></div>
+                            <div class="categoria-item inline" id="categoria-item3" onclick="_va('/catalogo/categoria/urbanos')"><i class="ph ph-city icone2 me-lg-1"></i> Urbano <span id="contador3" class="contador">596</span></div>
+                            <div class="categoria-item inline" id="categoria-item4" onclick="_va('/catalogo/categoria/rurais')"><i class="ph ph-garage icone2 me-lg-1"></i> Rural <span id="contador4" class="contador">8</span></div>
+                            <div class="categoria-item inline" id="categoria-item5" onclick="_va('/catalogo/categoria/terrenos')"><i class="ph ph-map-pin icone2 me-lg-1"></i> Terreno <span id="contador5" class="contador">14</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                    <div class="container-fluid box-location-highlights">
+                <div class="container ctn-limit">
+                    <div class="row">
+                        <div class="col-lg-6 col-md-9 col-8">
+                            <h1 class="titulo">Venda com locação simultânea <span class="informacao" data-bs-toggle="tooltip" data-bs-title="Venda de imóveis, parcial ou totalmente locados. Mais detalhes nos Editais.">i</span></h1>
+                            <div class="linha"> </div>
+                        </div>
+                        <div class="col-lg-6 col-md-3 col-4 text-end">
+                            <a class="btn btn-white text-center" href="/catalogo/categoria/venda-com-locacao">Ver todos</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 text-center pt-4 px-lg-2 px-0">
+                            <input type="hidden" id="_location-dots" value="6">
+                            <div class="slider-location py-3 px-0">
+                                <div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/8770">
+            <img src="/imagem/imovel/8770_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
     </div>
-    <div class="imovel" data-codigo="BB-1002">
-      <span class="codigo">BB-1002</span>
-      <h3 class="titulo">Casa, 120m²</h3>
-      <span class="endereco">Av. Brasil, 500</span>
-      <span class="bairro">Jardim América</span>
-      <span class="cidade">Anápolis</span>
-      <span class="uf">GO</span>
-      <span class="valor">R$ 320.500,50</span>
-      <span class="avaliacao">R$ 400.000,00</span>
-      <a href="https://www21.bb.com.br/imovel/BB-1002">Ver detalhes</a>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/8770"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/8770">
+                    <div class="valor">R$ 50.947.127,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID76269 RIO DE JANEIRO (RJ) - Barra da TijucaDescrição legal: Imóvel Urbano: Prédio Comercial situado na Praça E', 'http://seuimovelbb.com.br/imovel/id/8770');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/8770")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Rio de Janeiro, RJ</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 76269</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 76269</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/8770")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
     </div>
-    <div class="imovel" data-codigo="BB-1003">
-      <span class="codigo">BB-1003</span>
-      <h3 class="titulo">Terreno, 300m²</h3>
-      <span class="endereco">Rua Projetada, s/n</span>
-      <span class="bairro">Setor Norte</span>
-      <span class="cidade">Brasília</span>
-      <span class="uf">DF</span>
-      <span class="valor">R$ 95.000,00</span>
-      <span class="avaliacao">R$ 110.000,00</span>
-      <a href="/imovel/BB-1003">Ver detalhes</a>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10050">
+            <img src="/imagem/imovel/10050_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
     </div>
-  </div>
-</body>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10050"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10050">
+                    <div class="valor">R$ 31.956.084,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID74833 RIO DE JANEIRO (RJ) - Agência IpanemaDescrição legal: Imóvel Urbano: Prédio Comercial, situado na Rua Jo', 'http://seuimovelbb.com.br/imovel/id/10050');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10050")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Rio de Janeiro, RJ</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 74833</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 11h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 74833</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10050")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10078">
+            <img src="/imagem/imovel/10078_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10078"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10078">
+                    <div class="valor">R$ 30.130.022,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID76241 SÃO PAULO (SP) - Avenida AngélicaDescrição legal: Imóvel Urbano: Prédio Comercial situado Avenida Angéli', 'http://seuimovelbb.com.br/imovel/id/10078');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10078")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> São Paulo, SP</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 76241</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 11h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 76241</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10078")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10039">
+            <img src="/imagem/imovel/10039_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10039"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10039">
+                    <div class="valor">R$ 25.564.867,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID73170 MACEIÓ (AL)Descrição legal: Imóvel Urbano: Prédio Comercial situado Rua do Livramento, 120, Centro, Mace', 'http://seuimovelbb.com.br/imovel/id/10039');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10039")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Maceió, AL</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 73170</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 11h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 73170</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10039")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/8767">
+            <img src="/imagem/imovel/8767_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/8767"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/8767">
+                    <div class="valor">R$ 22.825.774,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID75411 CURITIBA (PR) - PortãoDescrição legal: Imóvel Urbano: Prédio Comercial situado Rua Carlos Dietszch,137, ', 'http://seuimovelbb.com.br/imovel/id/8767');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/8767")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Curitiba, PR</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 75411</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 75411</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/8767")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10046">
+            <img src="/imagem/imovel/10046_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10046"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10046">
+                    <div class="valor">R$ 18.583.832,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID74487 RIO DE JANEIRO (RJ) - BotafogoDescrição legal: Imóvel Urbano: Prédio Comercial situado na Praia de Botaf', 'http://seuimovelbb.com.br/imovel/id/10046');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10046")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Rio de Janeiro, RJ</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 74487</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 11h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 74487</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10046")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div>                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        <div class="container-fluid box-urban-highlights">
+            <div class="container ctn-limit">
+                <div class="row">
+                    <div class="col-6">
+                        <h1 class="titulo">Imóveis residenciais</h1>
+                        <div class="linha"> </div>
+                    </div>
+                    <div class="col-6 text-end">
+                        <a class="btn btn-white text-center" href="/catalogo/categoria/residenciais">Ver todos</a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12 text-center pt-4 px-lg-2 px-0">
+                        <input type="hidden" id="_urban-dots" value="6">
+                        <div class="slider-urban py-3 px-0">
+                            <div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10082">
+            <img src="/imagem/imovel/10082_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10082"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10082">
+                    <div class="valor">R$ 30.300.000,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID73160 RECIFE (PE)Descrição legal: Imóvel Urbano: Prédio comercial situado na Rua Itacaré, 137, Imbiribeira, Re', 'http://seuimovelbb.com.br/imovel/id/10082');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10082")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Recife, PE</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 73160</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 14h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 73160</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10082")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10079">
+            <img src="/imagem/imovel/10079_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10079"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10079">
+                    <div class="valor">R$ 5.960.310,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID75536 BRASILIA (DF)Descrição legal : Imóvel Urbano: Prédio Comercial, situado na C 12, Bloco I, Lote 01, Setor', 'http://seuimovelbb.com.br/imovel/id/10079');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10079")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Brasília, DF</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 75536</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 14h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 75536</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10079")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10088">
+            <img src="/imagem/imovel/10088_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10088"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10088">
+                    <div class="valor">R$ 5.734.541,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID88863 RIBEIRÃO PRETO (SP)Descrição legal: Imóvel Urbano: Prédio Comercial situado na Rua Buarque, 70, Campos E', 'http://seuimovelbb.com.br/imovel/id/10088');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10088")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Ribeirão Preto, SP</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 88863</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 14h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 88863</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10088")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10080">
+            <img src="/imagem/imovel/10080_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10080"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10080">
+                    <div class="valor">R$ 4.232.735,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID74382 CÁCERES (MT)Descrição legal : Imóvel Urbano: Prédio Comercial, situado na Rua Coronel José Dulce, 234, C', 'http://seuimovelbb.com.br/imovel/id/10080');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10080")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Cáceres, MT</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 74382</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 14h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 74382</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10080")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/7093">
+            <img src="/imagem/imovel/7093_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-house-door"></i> Casa</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/7093"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/7093">
+                    <div class="valor">R$ 952.700,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID99471&nbsp;Descrição legal: Imóvel Urbano Residencial, situado à Estrada do Sertão nº 3071, Jacarepaguá, município do ', 'http://seuimovelbb.com.br/imovel/id/7093');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/7093")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Rio de Janeiro, RJ</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 99471</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 99471</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/7093")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/7113">
+            <img src="/imagem/imovel/7113_1.png" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-house-door"></i> Casa</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/7113"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/7113">
+                    <div class="valor">R$ 725.000,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID91920Descrição legal: Imóvel Urbano Residencial, Casa situada à Rua Sete de Setembro, nº 659, Lote 13, Quadra 62, Cent', 'http://seuimovelbb.com.br/imovel/id/7113');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/7113")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Soledade, RS</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 91920</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 91920</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/7113")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div>                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                        <div class="container-fluid box-rural-highlights">
+            <div class="container ctn-limit">
+                <div class="row">
+                    <div class="col-6">
+                        <h1 class="titulo">Imóveis rurais</h1>
+                        <div class="linha"> </div>
+                    </div>
+                    <div class="col-6 text-end">
+                        <a class="btn btn-white text-center" href="/catalogo/categoria/rurais">Ver todos</a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12 text-center pt-4 px-lg-2 px-0">
+                        <input type="hidden" id="_rural-dots" value="6">
+                        <div class="slider-rural py-3">
+                            <div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/3553">
+            <img src="/imagem/imovel/3553_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-tree"></i> Fazenda</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/3553"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/3553">
+                    <div class="valor">R$ 1.848.000,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID156 e 157 CAMPO NOVO DO PARECIS (MT)Descrição legal: Imóvel Rural: Imóvel Rural: Um lote de terras denominado ', 'http://seuimovelbb.com.br/imovel/id/3553');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/3553")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Campo Novo do Parecis, MT</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 156</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 156</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/3553")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/3556">
+            <img src="/imagem/imovel/3556_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-tree"></i> Fazenda</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/3556"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/3556">
+                    <div class="valor">R$ 1.085.000,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID95079 SÃO JOÃO DA PONTE (MG)Descrição legal: Imóvel Rural: uma propriedade denominada Fazenda Bebedouro II e V', 'http://seuimovelbb.com.br/imovel/id/3556');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/3556")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> São João da Ponte, MG</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 95079</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 95079</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/3556")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/3554">
+            <img src="/imagem/imovel/3554_1.jfif" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-tree"></i> Terreno rural</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/3554"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/3554">
+                    <div class="valor">R$ 730.000,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID347 FÁTIMA DO SUL (MS)Descrição legal Imóvel Rural: Parte do lote nº 62, da quadra nº 41, da 1ª zona do Núcleo', 'http://seuimovelbb.com.br/imovel/id/3554');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/3554")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Fátima do Sul, MS</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 347</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 347</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/3554")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/3558">
+            <img src="/imagem/acervo/terreno.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-tree"></i> Terreno rural</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/3558"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/3558">
+                    <div class="valor">R$ 475.000,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID532 CASIMIRO DE ABREU (RJ)Descrição legal: Imóvel Rural: uma gleba de terras situada no lugar denominado Córre', 'http://seuimovelbb.com.br/imovel/id/3558');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/3558")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Casimiro de Abreu, RJ</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 532</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 532</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/3558")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/8717">
+            <img src="/imagem/imovel/8717_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-tree"></i> Terreno rural</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/8717"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/8717">
+                    <div class="valor">R$ 351.900,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID99505, 99506 e 99507 TANABI (SP)Descrição legal: Imóvel Urbano, Parte ideal de 50% dos Terrenos situados na Ru', 'http://seuimovelbb.com.br/imovel/id/8717');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/8717")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Tanabi, SP</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 99505</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 99505</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/8717")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/6726">
+            <img src="/imagem/imovel/6726_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-tree"></i> Terreno rural</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/6726"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/6726">
+                    <div class="valor">R$ 69.990,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('SÃO JOÃO DA BALIZA (RR)&nbsp;Descrição legal: Imóvel Rural: Terreno denominado "Lote n°1063", localizado da Gleba Jauape', 'http://seuimovelbb.com.br/imovel/id/6726');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/6726")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> São João da Baliza, RR</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 130</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 130</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/6726")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div>                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                            <div class="container-fluid box-comercial-highlights">
+                <div class="container ctn-limit">
+                    <div class="row">
+                        <div class="col-6">
+                            <h1 class="titulo">Imóveis comerciais</h1>
+                            <div class="linha"> </div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <a class="btn btn-white text-center" href="/catalogo/categoria/predios-sem-locacao">Ver todos</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 text-center pt-4 px-lg-2 px-0">
+                            <input type="hidden" id="_rural-dots" value="5">
+                            <div class="slider-rural py-3">
+                                <div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10086">
+            <img src="/imagem/imovel/10086_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10086"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10086">
+                    <div class="valor">R$ 15.538.000,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID72699 BAURU (SP)Descrição legal: Imóvel Urbano: Prédio Comercial localizado na Rua Antônio Cintra Junior, 3-11', 'http://seuimovelbb.com.br/imovel/id/10086');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10086")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Bauru, SP</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 72699</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 14h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 72699</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10086")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10087">
+            <img src="/imagem/imovel/10087_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10087"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10087">
+                    <div class="valor">R$ 3.200.000,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID74415 LIMEIRA (SP)Descrição legal: Imóvel Urbano: Prédio Comercial localizado na Praça Doutor Luciano Esteves ', 'http://seuimovelbb.com.br/imovel/id/10087');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10087")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Limeira, SP</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 74415</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 14h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 74415</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10087")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/10085">
+            <img src="/imagem/imovel/10085_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/10085"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/10085">
+                    <div class="valor">R$ 2.961.947,00</div>
+                    <div class="valor-rotulo">Valor de lance inicial</div>
+                    <div class="valor-desconto-progressivo d-none">Valor de lance inicial <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID74515 MONTENEGRO (RS)Descrição legal : Imóvel Urbano: Prédio Comercial, situado na Rua Ramiro Barcelos, nº 146', 'http://seuimovelbb.com.br/imovel/id/10085');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/10085")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Montenegro, RS</div>
+                <div class="leilao pt-2 "><i class="ph ph-gavel"></i> Leilão - ID 74515</div>
+                <div class="leilao pt-3 "><i class="bi bi-calendar"></i> Terça, 23/06 às 14h</div>
+                <div class="leilao pt-2 d-none hidden"><i class="bi bi-currency-dollar"></i> Venda direta - ID 74515</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/10085")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/8819">
+            <img src="/imagem/imovel/8819_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/8819"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/8819">
+                    <div class="valor">R$ 2.255.326,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID2938  CACHOEIRA PAULISTA(SP)Descrição legal: IMÓVEL URBANO: Prédio  Tipo Comercial situada na Rua Coronel Domi', 'http://seuimovelbb.com.br/imovel/id/8819');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/8819")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Cachoeira Paulista, SP</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 2938</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 2938</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/8819")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div><div class="card carta">
+    <div class="foto-container">
+        <a href="/imovel/id/3547">
+            <img src="/imagem/imovel/3547_1.jpg" class="card-img-top foto">
+            <div class="container caixa p-3">
+                <div class="row">
+                    <div class="col-6 text-start">
+                        <div class="novidade d-opaque">Novidade</div>
+                    </div>
+                    <div class="col-6 text-end">
+                                            </div>
+                </div>
+                <div class="row">
+                    <div class="col-7 text-start">
+                        <div class="tipo"><i class="bi bi-building"></i> Prédio</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="aceitabb d-none">Aceita BB?</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="card-body text-start px-3 py-2">
+        <div class="row">
+            <div class="col-11 text-start">
+                <a href="/imovel/id/3547"><div class="avaliacao">&nbsp;</div></a>
+                <a href="/imovel/id/3547">
+                    <div class="valor">R$ 1.266.500,00</div>
+                    <div class="valor-rotulo">Valor para proposta</div>
+                    <div class="valor-desconto-progressivo d-none">Valor para proposta <span class="valor-desconto-progressivo-span">+ Veja descontos extras</span></div>
+                    <div class="valor-aceita-bb d-none">Faça sua oferta</div>
+                </a>
+            </div>
+            <div class="col-1 text-start d-flex align-items-center ps-0">
+                <i class="bi bi-share compartilhar" onClick="_compartilhar('ID74335 ARROIO DO MEIO (RS)Descrição legal: Imóvel Urbano: Prédio comercial situado na Rua Mal. Floriano Peixoto', 'http://seuimovelbb.com.br/imovel/id/3547');"></i>
+            </div>
+        </div>
+        <div class="row corpo-evento d-flex align-items-center" onclick='_va("/imovel/id/3547")'>
+            <div>
+                <div class="localidade"><i class="bi bi-geo-alt"></i> Arroio do Meio, RS</div>
+                <div class="leilao pt-2 d-none hidden"><i class="ph ph-gavel"></i> Leilão - ID 74335</div>
+                <div class="leilao pt-3 d-none hidden"><i class="bi bi-calendar"></i> &nbsp;</div>
+                <div class="leilao pt-2 "><i class="bi bi-currency-dollar"></i> Venda direta - ID 74335</div>
+            </div>
+        </div>
+        <div class="row" onclick='_va("/imovel/id/3547")'>
+            <div class="col-12 py-2">
+                <div class="parceiro">Parceiro: Escritório de Leilões</div>
+            </div>
+        </div>
+    </div>
+</div>                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <div class="container-fluid box-product-highlights">
+            <div class="container ctn-limit">
+                <div class="row">
+                    <div class="col-lg-12 pb-4">
+                        <h1 class="titulo">Soluções do BB para você</h1>
+                        <div class="linha"> </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 d-block slick-products py-4 px-0 d-flex flex-wrap align-items-center justify-content-center">
+                        <div class="d-block slick-product" style="background-image: url('/imagem/publicidade/7.jpg');">
+                            <div class="slick-product-overlay">
+                                <h5>Financiamento Imobiliário</h5>
+                                <h6>BB te ajuda a financiar seu imóvel com uma contratação simples e 100% digital.</h6>
+                                <a href="https://www.bb.com.br/site/pra-voce/financiamentos/financiamento-imobiliario?utm_source=seu-imovel-bb&utm_medium=card" target="_blank">Simular agora</a>
+                            </div>
+                        </div>
+                        <div class="d-block slick-product" style="background-image: url('/imagem/publicidade/8.jpg');">
+                            <div class="slick-product-overlay">
+                                <h5>Seguro Residencial</h5>
+                                <h6>Lar verdadeiro é aquele lugar em que você está seguro para viver seus momentos.</h6>
+                                <a href="https://www.bbseguros.com.br/seguros/seguro-residencial?utm_source=seu-imovel-bb&utm_medium=card" target="_blank">Saiba mais</a>
+                            </div>
+                        </div>
+                        <div class="d-block slick-product" style="background-image: url('/imagem/publicidade/9.jpg');">
+                            <div class="slick-product-overlay">
+                                <h5>Benefícios BB</h5>
+                                <h6>Pontos, cashback, cupons e muitos mais.</h6>
+                                <a href="https://www.bb.com.br/site/pra-voce/beneficios-bb?utm_source=seu-imovel-bb&utm_medium=card" target="_blank">Conheça agora</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container ctn-limit">
+                <div class="row">
+                    <div class="d-block">
+                        <div class="d-block blog d-flex align-items-center">
+                            <div>
+                                <h1>Conheça o Blog BB!</h1>
+                                <h6 class="pb-2">Dicas e informações sobre aquisição de imóveis, investimentos, segurança educação financeira e muito mais.</h6>
+                                <a class="btn btn-blog text-center" href="https://blog.bb.com.br/?utm_source=seu-imovel-bb&utm_medium=banner" target="_blank">ACESSE</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a data-fancybox href="https://youtube.com/embed/NjNSuSQ8Y6U" class="d-none fancybox" id="esquenta-cesta-sibb" data-caption=""></a>
+                <div class="container-fluid box-bottom">
+            <div class="container ctn-limit pt-4">
+                <div class="row">
+                    <div class="col-lg-9 col-md-10 col-12 pe-lg-0">
+                        <div class="d-flex align-items-top justify-content-md-start justify-content-center p-0">
+                            <span class="logomarca"><a href="/"><img class="image-bottom" src="/imagem/conteudo/lg-padrao.png?2"></a></span>
+                        </div>
+                        <div class="pe-0 pt-2 text-lg-start endereco">
+                            Banco do Brasil S/A - CNPJ 00.000.000/0001-91 SAUN QD 5 LT B, Asa Norte, Brasília-DF, Brasil - CEP 70040-911
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-2 col-12 d-flex align-items-center justify-content-end">
+                        <div class="class-item nav-color w-ft-sm-100 border-sm-bottom d-flex justify-content-lg-end justify-content-md-end justify-content-sm-center align-items-center">
+                            <a class="nav-link" href="/parceiros">Parceiros</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a href="#top" class="text-center"><i class="bi bi-arrow-up"></i></a>
+        <a href="/duvidas" class="text-center" id="duvidas"><i class="bi bi-question-circle duvidas-i"></i> <span class="duvidas-span">Dúvidas?</span></a>
+            <div id="modalSharer" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalLongTitle">Compartilhamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        Escolha abaixo a opção com a qual deseja compartilhar o conteúdo:
+                        <div class="alert bkg-amarelo-claro mt-2"><div class="d-none" id="_shareTitle"></div><div id="_shareLink"></div></div>
+                    </div>
+                    <div class="d-block py-2 text-center">
+                        <a class="sharer me-4" data-bs-dismiss="modal" onClick="_compartilharWhatsApp();"><i class="bi bi-whatsapp"></i></a>
+                        <a class="sharer" data-bs-dismiss="modal" onClick="_compartilharEmail();"><i class="bi bi-envelope-at"></i></a>
+                    </div>
+                </div>
+                <div class="modal-footer"><a class="btn btn-blue py-2 px-4" id="modalAlertCloser" data-bs-dismiss="modal">Fechar</a></div>
+            </div>
+        </div>
+    </div>
+            <div id="modalAlert" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalCenterTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer"><button type="button" class="btn btn-blue py-2 px-4" id="modalAlertCloser" data-bs-dismiss="modal">Fechar</button></div>
+            </div>
+        </div>
+    </div>
+    <div id="modalPrompt" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Redirecionamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body"><b class="fw-bold">ATENÇÃO</b>:<br><br>Você está sendo redirecionado para o site do Parceiro Vendedor.<br></div>
+                <div class="modal-footer"><button type="button" class="btn btn-blue py-2 px-4" data-bs-dismiss="modal" onClick="_abra(_redirecionamento);">Continuar</button></div>
+            </div>
+        </div>
+    </div>
+    <div id="_cppnp" class="d-none">535143152a21dd7702794232a8170632</div>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js" integrity="sha512-XtmMtDEcNz2j7ekrtHvOVR4iwwaD6o/FUJe6+Zq+HgcCsk3kj4uSQQR8weQ2QVj1o0Pk6PwYLohm206ZzNfubg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" crossorigin="anonymous"></script>
+    <script src="js/base_vs_2.js"></script>
+
+    <div class="offcanvas offcanvas-bottom border-0 shadow d-none" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel" style="height: 100px !important;">
+        <div class="offcanvas-header pt-1 pb-0 mt-0">
+            <h6 class="offcanvas-title frg6 fw-bold" id="offcanvasScrollingLabel">Sobre sua privacidade</h6>
+            <button type="button" class="btn bkg0 text-white" data-bs-dismiss="offcanvas" aria-label="Close" onclick="_aceitarPrivacidade();">Estou ciente</button>
+        </div>
+        <div class="offcanvas-body small overflow-hidden">
+            <div class="txt14 frg6">Utilizamos Cookies para identificarmos nossos usuários. Para mais informações acesse nossa <a href="/politica-de-privacidade" class="a-new fw-bold txt1">política de privacidade</a>.</div>
+        </div>
+    </div>
+
+    <script>
+                var offcanvasElementList = [].slice.call(document.querySelectorAll('.offcanvas-bottom'));
+        offcanvasList = offcanvasElementList.map(function (offcanvasEl) {return new bootstrap.Offcanvas(offcanvasEl).show();});
+                        //$.ajax({type: 'GET', url: 'https://www.geoplugin.net/json.gp?ip=', dataType: 'json', crossDomain: true, success: function(oJSON) { if (oJSON.geoplugin_status == 200) {$.post('/identificacao', {pais: oJSON.geoplugin_countryName, paisCodigo: oJSON.geoplugin_countryCode, regiao: oJSON.geoplugin_region, regiaoCodigo: oJSON.geoplugin_regionCode, cidade: oJSON.geoplugin_city, latitude: oJSON.geoplugin_latitude, longitude: oJSON.geoplugin_longitude, timeZone: oJSON.geoplugin_timezone}, function() {});}} });
+            </script>
+    <script>
+        $('#duvidas').on('mouseover', function() {
+            $('#duvidas').css('width', '130px');
+            $('.duvidas-span').css('opacity', '1');
+        }).on('mouseout', function() {
+            $('.duvidas-span').css('opacity', '0');
+            $('#duvidas').css('width', '50px');
+        })
+    </script>        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+        <script src="js/index_vs_5.js"></script>
+                    <script>
+                $(document).ready(function() {
+                    $('#esquenta-cesta-sibb').click();
+                    $.post('/esquenta-cesta-sibb', {}, function() {});
+                });
+            </script>
+                    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0b191184ee0eede',t:'MTc4MTM1ODY1Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
