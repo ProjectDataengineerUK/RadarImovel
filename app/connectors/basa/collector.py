@@ -1,7 +1,7 @@
 """Connector Banco da Amazônia (basa).
 
-Página de editais de venda de bens (HTML índice) → links de editais PDF
-(leilão/praça pública). PDFs extraídos com pdfplumber. Hipóteses a validar.
+Página SSR leiloes-de-imoveis (Next.js, renders server-side) → tabela HTML
+com links para editais PDF. httpx é suficiente — sem Playwright.
 """
 import re
 from collections.abc import Iterator
@@ -12,10 +12,9 @@ from bs4 import BeautifulSoup
 from app.connectors.basa.normalizer import BASANormalizer
 from app.connectors.basa.parser import BASAParser
 from app.connectors.base import BankConnector, RawProperty
-from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
-BASA_INDEX_URL = "https://www.bancoamazonia.com.br/imoveis-e-bens"
+BASA_INDEX_URL = "https://www.bancoamazonia.com.br/o-banco/licitacoes/leiloes-de-imoveis"
 
 _HEADERS = {
     "User-Agent": (
@@ -37,56 +36,17 @@ class BASAConnector(BankConnector):
         self.normalizer = BASANormalizer()
 
     def discover_sources(self) -> list[str]:
-        sources = [BASA_INDEX_URL]
-        index_bytes = self.fetch_raw(BASA_INDEX_URL)
-        sources.extend(self._extract_pdf_links(index_bytes, BASA_INDEX_URL))
-        return sources
-
-    def _extract_pdf_links(self, raw_bytes: bytes, base_url: str) -> list[str]:
-        if not raw_bytes or raw_bytes[:4] == b"%PDF":
-            return []
-        try:
-            soup = BeautifulSoup(raw_bytes, "lxml")
-        except Exception as exc:
-            logger.error("basa.index_soup_failed", error=str(exc))
-            return []
-        links: list[str] = []
-        for a in soup.select("a[href]"):
-            href = str(a.get("href", "")).strip()
-            if re.search(r"\.pdf($|\?)", href, re.IGNORECASE):
-                if not href.startswith("http"):
-                    href = base_url.rsplit("/", 1)[0] + "/" + href.lstrip("/")
-                links.append(href)
-        logger.info("basa.index_pdf_links", count=len(links))
-        return links
+        return [BASA_INDEX_URL]
 
     def fetch_raw(self, source_url: str) -> bytes:
-        if source_url.lower().endswith(".pdf"):
-            # Direct PDF link — use httpx
-            try:
-                with httpx.Client(
-                    headers=_HEADERS, timeout=45, follow_redirects=True
-                ) as client:
-                    resp = client.get(source_url)
-                    resp.raise_for_status()
-                    content = resp.content
-            except Exception as exc:
-                logger.error("basa.fetch_failed", url=source_url, error=str(exc))
-                return b""
-        else:
-            # SPA (Next.js) — Playwright renders JavaScript-loaded content
-            content = fetch_with_playwright(source_url)
-            if not content:
-                try:
-                    with httpx.Client(
-                        headers=_HEADERS, timeout=45, follow_redirects=True
-                    ) as client:
-                        resp = client.get(source_url)
-                        resp.raise_for_status()
-                        content = resp.content
-                except Exception as exc:
-                    logger.error("basa.fetch_failed", url=source_url, error=str(exc))
-                    return b""
+        try:
+            with httpx.Client(headers=_HEADERS, timeout=45, follow_redirects=True) as client:
+                resp = client.get(source_url)
+                resp.raise_for_status()
+                content = resp.content
+        except Exception as exc:
+            logger.error("basa.fetch_failed", url=source_url, error=str(exc))
+            return b""
 
         head = content[:512].lower()
         if b"captcha" in head or b"challenge" in head:

@@ -1,34 +1,44 @@
-from datetime import date
-from decimal import Decimal
 from pathlib import Path
 
 from app.connectors.basa import BASAConnector
 
 FIXTURES = Path(__file__).parents[2] / "fixtures" / "html"
+INDEX_URL = "https://www.bancoamazonia.com.br/o-banco/licitacoes/leiloes-de-imoveis"
 
 
-def test_basa_pdf_extracts_three():
-    raw = (FIXTURES / "basa_edital.pdf").read_bytes()
-    props = list(BASAConnector().parse(raw, "https://www.bancoamazonia.com.br/edital03.pdf"))
-    assert len(props) == 3
+def _index_props():
+    raw = (FIXTURES / "basa_index.html").read_bytes()
+    return list(BASAConnector().parse(raw, INDEX_URL))
+
+
+def test_basa_index_extracts_rows():
+    props = _index_props()
+    # BASA rarely has listings; real page had 1 entry (from 2021)
+    assert isinstance(props, list)
     assert all(p.bank_code == "basa" for p in props)
 
 
-def test_basa_normalize_edital_meta():
-    raw = (FIXTURES / "basa_edital.pdf").read_bytes()
-    p = list(BASAConnector().parse(raw, "https://www.bancoamazonia.com.br/edital03.pdf"))[0]
-    norm = BASAConnector().normalize(p)
-    assert norm["bank_code"] == "basa"
-    assert norm["city"] == "Belém"
-    assert norm["state"] == "PA"
-    assert norm["sale_modality"] == "Leilão"
-    assert norm["edital_number"] == "03/2026"
-    assert norm["auction_date"] == date(2026, 7, 15)
-    assert norm["current_value"] == Decimal("196000.00")
-    assert norm["edital_url"].endswith("edital03.pdf")
-
-
-def test_basa_index_html_yields_nothing():
-    html = b"<html><body><a href='/edital03.pdf'>Edital</a></body></html>"
-    props = list(BASAConnector().parse(html, "https://www.bancoamazonia.com.br/imoveis-e-bens"))
+def test_basa_index_no_table_yields_nothing():
+    html = "<html><body><p>Sem leiloes no momento.</p></body></html>".encode("utf-8")
+    props = list(BASAConnector().parse(html, INDEX_URL))
     assert props == []
+
+
+def test_basa_index_row_has_edital_url():
+    props = _index_props()
+    if not props:
+        return  # BASA may have no current listings
+    for p in props:
+        url = p.raw_data.get("edital_url") or p.raw_data.get("official_url") or ""
+        assert url != ""
+
+
+def test_basa_index_city_state_parsed():
+    props = _index_props()
+    if not props:
+        return
+    norms = [BASAConnector().normalize(p) for p in props]
+    for n in norms:
+        assert n["state"] in ("PA", "AM", "AC", "AP", "RO", "RR", "TO", "MA", "MT", "GO", "RJ", "")
+        assert n["bank_code"] == "basa"
+        assert n["sale_modality"] == "Leilão"

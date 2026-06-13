@@ -1,16 +1,17 @@
 """Connector Banco do Nordeste (bnb).
 
-Página "Bens à Venda" (HTML) + PDF de relação de imóveis. Detecta content-type
-em fetch_raw. URLs e formato são hipóteses a validar no build.
+Liferay page has the PDF link in static HTML — no Playwright needed.
+discover_sources() fetches the index, extracts the PDF URL, returns it directly.
 """
+import re
 from collections.abc import Iterator
 
 import httpx
+from bs4 import BeautifulSoup
 
 from app.connectors.base import BankConnector, RawProperty
 from app.connectors.bnb.normalizer import BNBNormalizer
 from app.connectors.bnb.parser import BNBParser
-from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
 BNB_LIST_URL = "https://www.bnb.gov.br/acesso-a-informacao/licitacoes-e-contratos/bens-a-venda"
@@ -35,35 +36,46 @@ class BNBConnector(BankConnector):
         self.normalizer = BNBNormalizer()
 
     def discover_sources(self) -> list[str]:
-        return [BNB_LIST_URL]
+        try:
+            with httpx.Client(headers=_HEADERS, timeout=30, follow_redirects=True) as client:
+                resp = client.get(BNB_LIST_URL)
+                resp.raise_for_status()
+                html = resp.text
+        except Exception as exc:
+            logger.error("bnb.discover_failed", url=BNB_LIST_URL, error=str(exc))
+            return []
+
+        soup = BeautifulSoup(html, "lxml")
+        pdf_links: list[str] = []
+        for a in soup.find_all("a", href=True):
+            href = str(a["href"]).strip()
+            if re.search(r"\.pdf", href, re.IGNORECASE):
+                if not href.startswith("http"):
+                    href = "https://www.bnb.gov.br" + href
+                pdf_links.append(href)
+
+        if not pdf_links:
+            logger.warning("bnb.discover_no_pdf", url=BNB_LIST_URL)
+            return []
+
+        logger.info("bnb.discover_pdf", count=len(pdf_links))
+        return pdf_links
 
     def fetch_raw(self, source_url: str) -> bytes:
-        # Try httpx first — handles direct PDF links returned by the Liferay portal
-        content = b""
-        content_type = ""
         try:
-            with httpx.Client(
-                headers=_HEADERS, timeout=45, follow_redirects=True
-            ) as client:
+            with httpx.Client(headers=_HEADERS, timeout=60, follow_redirects=True) as client:
                 resp = client.get(source_url)
                 resp.raise_for_status()
                 content = resp.content
-                content_type = resp.headers.get("content-type", "")
         except Exception as exc:
-            logger.warning("bnb.fetch_http_failed", url=source_url, error=str(exc))
-
-        is_pdf = content[:4] == b"%PDF" or "application/pdf" in content_type
-        if not is_pdf:
-            # Liferay portal renders content via JS — use Playwright for full render
-            rendered = fetch_with_playwright(source_url)
-            if rendered:
-                content = rendered
+            logger.error("bnb.fetch_failed", url=source_url, error=str(exc))
+            return b""
 
         head = content[:512].lower()
         if b"captcha" in head or b"challenge" in head:
             logger.warning("bnb.fetch_got_challenge", url=source_url)
             return b""
-        logger.info("bnb.fetch_ok", url=source_url, size=len(content), pdf=is_pdf)
+        logger.info("bnb.fetch_ok", url=source_url, size=len(content))
         return content
 
     def parse(self, raw_bytes: bytes, source_url: str) -> Iterator[RawProperty]:

@@ -1,7 +1,7 @@
 """Connector Banrisul.
 
-Página de bens à venda Banrisul (HTML). Banco gaúcho — default state RS quando
-ausente. URL e estrutura são hipóteses a validar no build.
+ASPX listing pages under /bob/link/ — ISO-8859-1, static HTML, no Playwright.
+Three secao_id values: 3551 (Novas), 3552 (Em Andamento), 3553 (Concluídas).
 """
 from collections.abc import Iterator
 
@@ -10,10 +10,14 @@ import httpx
 from app.connectors.banrisul.normalizer import BanrisulNormalizer
 from app.connectors.banrisul.parser import BanrisulParser
 from app.connectors.base import BankConnector, RawProperty
-from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
-BANRISUL_LIST_URL = "https://www.banrisul.com.br/bob/site/link/bens-a-venda.html"
+_BASE = "https://www.banrisul.com.br/bob/link/bobw10hn_leiloes_comprar_lista.aspx"
+BANRISUL_SOURCES = [
+    f"{_BASE}?secao_id=3551",  # Novas
+    f"{_BASE}?secao_id=3552",  # Em Andamento
+    f"{_BASE}?secao_id=3553",  # Concluídas
+]
 
 _HEADERS = {
     "User-Agent": (
@@ -35,22 +39,18 @@ class BanrisulConnector(BankConnector):
         self.normalizer = BanrisulNormalizer()
 
     def discover_sources(self) -> list[str]:
-        return [BANRISUL_LIST_URL]
+        return list(BANRISUL_SOURCES)
 
     def fetch_raw(self, source_url: str) -> bytes:
-        # SPA page — Playwright renders the JavaScript-loaded property listings
-        content = fetch_with_playwright(source_url)
-        if not content:
-            try:
-                with httpx.Client(
-                    headers=_HEADERS, timeout=30, follow_redirects=True
-                ) as client:
-                    resp = client.get(source_url)
-                    resp.raise_for_status()
-                    content = resp.content
-            except Exception as exc:
-                logger.error("banrisul.fetch_failed", url=source_url, error=str(exc))
-                return b""
+        try:
+            with httpx.Client(headers=_HEADERS, timeout=30, follow_redirects=True) as client:
+                resp = client.get(source_url)
+                resp.raise_for_status()
+                # ASPX pages use ISO-8859-1; return raw bytes so parser can decode
+                content = resp.content
+        except Exception as exc:
+            logger.error("banrisul.fetch_failed", url=source_url, error=str(exc))
+            return b""
 
         head = content[:512].lower()
         if b"captcha" in head or b"challenge" in head:
