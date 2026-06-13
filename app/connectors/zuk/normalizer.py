@@ -54,7 +54,7 @@ class ZukNormalizer:
                 "current_value": current_value or Decimal("0"),
                 "discount_percent": discount,
                 "occupancy_status": parse_occupancy(d.get("occupancy_status")),
-                "sale_modality": clean_text(d.get("sale_modality")) or "Leilão",
+                "sale_modality": clean_text(d.get("sale_modality"), max_len=50) or "Leilão",
                 "auction_date": parse_br_date(d.get("auction_date")),
                 "official_url": str(d.get("official_url", "")).strip(),
                 "photo_url": clean_text(d.get("photo_url")),

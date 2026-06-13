@@ -44,7 +44,7 @@ class BRBNormalizer:
                 "current_value": current_value or Decimal("0"),
                 "discount_percent": discount_percent,
                 "occupancy_status": parse_occupancy(d.get("occupancy_status")),
-                "sale_modality": clean_text(d.get("sale_modality")) or modality,
+                "sale_modality": clean_text(d.get("sale_modality"), max_len=50) or modality,
                 "official_url": str(d.get("official_url", "")).strip(),
                 "status": "active",
             }

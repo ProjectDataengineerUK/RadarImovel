@@ -38,7 +38,7 @@ class BNBNormalizer:
                 "current_value": current_value or Decimal("0"),
                 "discount_percent": discount_percent,
                 "occupancy_status": parse_occupancy(d.get("occupancy_status")),
-                "sale_modality": clean_text(d.get("sale_modality")) or "Venda direta",
+                "sale_modality": clean_text(d.get("sale_modality"), max_len=50) or "Venda direta",
                 "edital_url": clean_text(d.get("edital_url")),
                 "official_url": str(d.get("official_url", "")).strip(),
                 "status": "active",

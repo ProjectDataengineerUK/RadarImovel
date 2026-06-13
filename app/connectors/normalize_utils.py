@@ -51,12 +51,14 @@ def parse_occupancy(value: str | None) -> str:
     return str(value).strip()
 
 
-def clean_text(value: str | None) -> str | None:
-    """Colapsa espaços/quebras e remove bordas; None se vazio."""
+def clean_text(value: str | None, max_len: int | None = None) -> str | None:
+    """Colapsa espaços/quebras e remove bordas; None se vazio. Trunca se max_len."""
     if value is None:
         return None
     s = re.sub(r"\s+", " ", str(value)).strip()
-    return s or None
+    if not s:
+        return None
+    return s[:max_len] if max_len else s
 
 
 def extract_type(title: str | None) -> str:
@@ -64,7 +66,7 @@ def extract_type(title: str | None) -> str:
     if not title:
         return "Imóvel"
     head = re.split(r"[,\-–|]", str(title), maxsplit=1)[0].strip()
-    return head or "Imóvel"
+    return (head or "Imóvel")[:50]
 
 
 _DATE_FORMATS = ("%d/%m/%Y", "%d/%m/%y", "%d-%m-%Y", "%Y-%m-%d", "%d.%m.%Y")
