@@ -13,15 +13,25 @@ _firebase_initialized = False
 
 ROLE_ORDER = {"user": 0, "suporte": 1, "operador": 2, "admin": 3}
 
+_FIREBASE_PROJECT_ID = "radarimovel-18a25"
+
 
 def _ensure_firebase():
     global _firebase_initialized
-    if not _firebase_initialized:
-        settings = get_settings()
-        cred_dict = json.loads(settings.firebase_credentials_json)
+    if _firebase_initialized:
+        return
+    settings = get_settings()
+    cred_dict = json.loads(settings.firebase_credentials_json)
+    private_key = cred_dict.get("private_key", "")
+    if private_key.startswith("-----BEGIN"):
+        # Real service account certificate
         cred = credentials.Certificate(cred_dict)
         firebase_admin.initialize_app(cred)
-        _firebase_initialized = True
+    else:
+        # Placeholder or missing key: use Application Default Credentials (Cloud Run SA)
+        # Token verification only needs the project ID — no SA key required.
+        firebase_admin.initialize_app(options={"projectId": _FIREBASE_PROJECT_ID})
+    _firebase_initialized = True
 
 
 async def get_current_user(
@@ -37,7 +47,17 @@ async def get_current_user(
     firebase_uid = decoded["uid"]
     user = db.query(User).filter_by(firebase_uid=firebase_uid).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        # Auto-register on first login
+        email = decoded.get("email", f"{firebase_uid}@unknown.local")
+        is_first_user = db.query(User).count() == 0
+        user = User(
+            firebase_uid=firebase_uid,
+            email=email,
+            role="admin" if is_first_user else "user",
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
     return user
 
 

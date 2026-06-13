@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from app.api.middleware.auth import require_role
+from app.api.middleware.auth import get_current_user, require_role
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.document import Document
@@ -15,6 +15,20 @@ from app.models.user import Alert, User
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 settings = get_settings()
+
+
+@router.post("/bootstrap-admin")
+def bootstrap_admin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Promoção do primeiro admin. Só funciona enquanto não há nenhum admin no sistema."""
+    admin_count = db.query(User).filter_by(role="admin").count()
+    if admin_count > 0:
+        raise HTTPException(403, detail="Já existe um admin. Use /admin/users/{id}/role para alterar papéis.")
+    current_user.role = "admin"
+    db.commit()
+    return {"ok": True, "promoted_to": "admin", "user_id": str(current_user.id)}
 
 VALID_UFS = {
     "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
