@@ -1,12 +1,15 @@
 import json
+
 import firebase_admin
-from firebase_admin import auth as firebase_auth, credentials
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
+from firebase_admin import auth as firebase_auth
+from firebase_admin import credentials
+from sqlalchemy.orm import Session
+
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.user import User
-from sqlalchemy.orm import Session
 
 security = HTTPBearer()
 _firebase_initialized = False

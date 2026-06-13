@@ -6,6 +6,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import ScoreBadge from "@/components/ScoreBadge";
 import api from "@/lib/api";
+import { BANK_DISPLAY, BANK_OPTIONS } from "@/lib/banks";
 
 interface AdminStatus {
   total_active_properties: number;
@@ -151,12 +152,12 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-800 text-left">
-                    {["#", "Score", "Imóvel", "Tipo", "Preço", "Desconto", "Status"].map((h, i) => (
+                    {["#", "Score", "Banco", "Imóvel", "Tipo", "Preço", "Desconto", "Status"].map((h, i) => (
                       <th
                         key={h}
                         className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                          i === 0 ? "pl-6 w-10" : i >= 4 && i <= 5 ? "text-right" : ""
-                        } ${i === 6 ? "pr-6" : ""}`}
+                          i === 0 ? "pl-6 w-10" : i >= 5 && i <= 6 ? "text-right" : ""
+                        } ${i === 7 ? "pr-6" : ""}`}
                       >
                         {h}
                       </th>
@@ -169,6 +170,16 @@ export default function DashboardPage() {
                       <td className="pl-6 pr-4 py-3.5 text-xs text-gray-600 tabular-nums">{i + 1}</td>
                       <td className="px-4 py-3.5">
                         <ScoreBadge score={p.opportunity_score} />
+                      </td>
+                      <td className="px-4 py-3.5">
+                        {p.bank_code ? (() => {
+                          const b = BANK_DISPLAY[p.bank_code] ?? { label: p.bank_code.toUpperCase(), color: "text-gray-400", bg: "bg-gray-500/10 ring-gray-500/20" };
+                          return (
+                            <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded font-semibold ring-1 ${b.bg} ${b.color}`}>
+                              {b.label}
+                            </span>
+                          );
+                        })() : <span className="text-gray-600">—</span>}
                       </td>
                       <td className="px-4 py-3.5">
                         <Link href={`/imoveis/${p.id}`} className="font-medium text-white group-hover:text-blue-400 transition-colors">
@@ -249,17 +260,32 @@ export default function DashboardPage() {
         {/* Coletores */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl px-6 py-4">
           <h2 className="text-sm font-semibold text-white mb-4">Coletores</h2>
-          <div className="flex items-center gap-3">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-sm text-gray-300 font-medium">Caixa Econômica Federal</span>
-            <span className="text-gray-700">·</span>
-            <span className="text-xs text-gray-500">Coleta 3× ao dia · 08h · 14h · 20h</span>
-            <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20 font-medium">
-              Online
-            </span>
+          <div className="space-y-3">
+            {BANK_OPTIONS.map((bank) => {
+              const isCaixa = bank.value === "caixa";
+              const b = BANK_DISPLAY[bank.value];
+              return (
+                <div key={bank.value} className="flex items-center gap-3">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isCaixa ? "bg-emerald-400" : "bg-sky-400"}`} />
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isCaixa ? "bg-emerald-500" : "bg-sky-500"}`} />
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded font-semibold ring-1 ${b.bg} ${b.color}`}>{b.label}</span>
+                  <span className="text-sm text-gray-300 font-medium">{bank.label}</span>
+                  <span className="text-gray-700">·</span>
+                  <span className="text-xs text-gray-500">
+                    {isCaixa ? "3× ao dia · 08h · 14h · 20h" : "1× ao dia · 17h"}
+                  </span>
+                  <span className={`ml-auto text-xs px-2.5 py-1 rounded-full ring-1 font-medium ${
+                    isCaixa
+                      ? "bg-emerald-500/10 text-emerald-400 ring-emerald-500/20"
+                      : "bg-sky-500/10 text-sky-400 ring-sky-500/20"
+                  }`}>
+                    Online
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

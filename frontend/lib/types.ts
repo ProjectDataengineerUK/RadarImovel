@@ -1,6 +1,8 @@
 export interface Property {
   id: string;
   bank_id: string;
+  bank_code: string | null;
+  bank_name: string | null;
   external_code: string;
   title: string | null;
   property_type: string;
@@ -158,6 +160,7 @@ export interface RiskHeatmap {
 export interface PropertyFilters {
   state?: string;
   city?: string;
+  bank_code?: string;
   max_price?: number;
   min_discount?: number;
   occupancy_status?: string;

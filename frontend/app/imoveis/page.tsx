@@ -6,9 +6,9 @@ import { useProperties } from "@/hooks/useProperties";
 import { formatCurrency } from "@/lib/utils";
 import ScoreBadge from "@/components/ScoreBadge";
 import type { PropertyFilters as Filters } from "@/lib/types";
+import { BANK_DISPLAY, BANK_OPTIONS } from "@/lib/banks";
 
 const STATES = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
-const TYPES = ["Apartamento","Casa","Terreno","Comercial","Rural","Outros"];
 const MODALITIES = ["Venda Online","Venda Direta Online","Licitação Aberta","Leilão SFI","Leilão SFH"];
 
 export default function ImoveisPage() {
@@ -75,7 +75,19 @@ export default function ImoveisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Tipo</label>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Banco</label>
+              <select
+                className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                value={filters.bank_code ?? ""}
+                onChange={(e) => set("bank_code", e.target.value)}
+              >
+                <option value="">Todos os bancos</option>
+                {BANK_OPTIONS.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Ocupação</label>
               <select
                 className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                 value={filters.occupancy_status ?? ""}
@@ -148,6 +160,7 @@ export default function ImoveisPage() {
                   <tr className="border-b border-gray-800 text-left">
                     <th className="pl-6 pr-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Imóvel</th>
+                    <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Banco</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Modalidade</th>
                     <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Valor</th>
@@ -166,6 +179,16 @@ export default function ImoveisPage() {
                           {p.city}, {p.state}
                         </Link>
                         {p.neighborhood && <p className="text-xs text-gray-500 mt-0.5">{p.neighborhood}</p>}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        {p.bank_code ? (() => {
+                          const b = BANK_DISPLAY[p.bank_code] ?? { label: p.bank_code.toUpperCase(), color: "text-gray-400", bg: "bg-gray-500/10 ring-gray-500/20" };
+                          return (
+                            <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded font-semibold ring-1 ${b.bg} ${b.color}`}>
+                              {b.label}
+                            </span>
+                          );
+                        })() : <span className="text-gray-600">—</span>}
                       </td>
                       <td className="px-4 py-3.5 text-gray-400">{p.property_type}</td>
                       <td className="px-4 py-3.5 text-gray-400">{p.sale_modality}</td>

@@ -5,14 +5,14 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
-from app.api.middleware.auth import get_current_user, require_feature
+from app.api.middleware.auth import require_feature
 from app.core.database import get_db
-from app.models.document import Document
 from app.models.bank import Bank
-from app.models.property import Property, PropertyChange, PropertyOffer
+from app.models.document import Document
 from app.models.prediction import PricePrediction
+from app.models.property import Property, PropertyChange, PropertyOffer
 from app.models.user import User
 from app.schemas.matricula import MatriculaOut
 
@@ -26,11 +26,50 @@ _EXPORT_COLS = [
 ]
 
 
+def _serialize_property(p: Property) -> dict:
+    return {
+        "id": str(p.id),
+        "bank_id": str(p.bank_id),
+        "bank_code": p.bank.code if p.bank else None,
+        "bank_name": p.bank.name if p.bank else None,
+        "external_code": p.external_code,
+        "title": p.title,
+        "property_type": p.property_type,
+        "address": p.address,
+        "neighborhood": p.neighborhood,
+        "city": p.city,
+        "state": p.state,
+        "latitude": float(p.latitude) if p.latitude else None,
+        "longitude": float(p.longitude) if p.longitude else None,
+        "area_total": float(p.area_total) if p.area_total else None,
+        "area_private": float(p.area_private) if p.area_private else None,
+        "bedrooms": p.bedrooms,
+        "parking_spaces": p.parking_spaces,
+        "appraisal_value": float(p.appraisal_value) if p.appraisal_value else None,
+        "minimum_value": float(p.minimum_value) if p.minimum_value else None,
+        "current_value": float(p.current_value),
+        "discount_percent": float(p.discount_percent) if p.discount_percent else None,
+        "occupancy_status": p.occupancy_status,
+        "sale_modality": p.sale_modality,
+        "edital_number": p.edital_number,
+        "auction_date": p.auction_date,
+        "official_url": p.official_url,
+        "edital_url": p.edital_url,
+        "auctioneer_name": p.auctioneer_name,
+        "risk_level": p.risk_level,
+        "opportunity_score": p.opportunity_score,
+        "status": p.status,
+        "first_seen_at": p.first_seen_at.isoformat() if p.first_seen_at else None,
+        "last_seen_at": p.last_seen_at.isoformat() if p.last_seen_at else None,
+    }
+
+
 @router.get("", include_in_schema=True)
 @router.get("/", include_in_schema=False)
 def list_properties(
     state: str | None = Query(None),
     city: str | None = Query(None),
+    bank_code: str | None = Query(None),
     max_price: float | None = Query(None),
     min_discount: float | None = Query(None),
     occupancy_status: str | None = Query(None),
@@ -39,11 +78,13 @@ def list_properties(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
-    q = db.query(Property).filter(Property.status == "active")
+    q = db.query(Property).options(joinedload(Property.bank)).filter(Property.status == "active")
     if state:
         q = q.filter(Property.state == state.upper())
     if city:
         q = q.filter(Property.city.ilike(f"%{city}%"))
+    if bank_code:
+        q = q.join(Bank).filter(Bank.code == bank_code.lower())
     if max_price:
         q = q.filter(Property.current_value <= max_price)
     if min_discount:
@@ -55,7 +96,7 @@ def list_properties(
 
     total = q.count()
     items = q.order_by(Property.opportunity_score.desc()).offset(offset).limit(limit).all()
-    return {"total": total, "items": items, "offset": offset, "limit": limit}
+    return {"total": total, "items": [_serialize_property(p) for p in items], "offset": offset, "limit": limit}
 
 
 @router.get("/export")
