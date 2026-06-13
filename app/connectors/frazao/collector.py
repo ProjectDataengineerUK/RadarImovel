@@ -1,4 +1,9 @@
-"""Connector Frazão Leilões (frazaoleiloes.com.br) — leiloeiro multi-estado."""
+"""Connector Frazão Leilões (frazaoleiloes.com.br) — leiloeiro multi-estado.
+
+Estrutura: /lotes/busca/p/{page}?categorias=Imovel retorna lot cards .item-bid
+carregados via JavaScript. Playwright é necessário; wait_selector garante que
+os lotes estejam no DOM antes de capturar o HTML.
+"""
 from collections.abc import Iterator
 
 import httpx
@@ -9,7 +14,9 @@ from app.connectors.frazao.parser import FrazaoParser
 from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
-FRAZAO_SEARCH_URL = "https://www.frazaoleiloes.com.br/leiloes/imoveis?pagina={page}"
+FRAZAO_SEARCH_URL = (
+    "https://www.frazaoleiloes.com.br/lotes/busca/p/{page}?categorias=Imovel"
+)
 FRAZAO_MAX_PAGES = 15
 
 _HEADERS = {
@@ -36,7 +43,10 @@ class FrazaoConnector(BankConnector):
         return [FRAZAO_SEARCH_URL.format(page=p) for p in range(1, FRAZAO_MAX_PAGES + 1)]
 
     def fetch_raw(self, source_url: str) -> bytes:
-        content = fetch_with_playwright(source_url)
+        # Frazao uses client-side rendering; wait for .item-bid to appear
+        content = fetch_with_playwright(
+            source_url, wait_selector="#leilao-lista-lote .item-bid"
+        )
         if not content:
             try:
                 with httpx.Client(headers=_HEADERS, timeout=30, follow_redirects=True) as client:
@@ -48,6 +58,7 @@ class FrazaoConnector(BankConnector):
                 return b""
         if not content or b"captcha" in content[:512].lower():
             return b""
+        logger.info("frazao.fetch_ok", url=source_url, size=len(content))
         return content
 
     def parse(self, raw_bytes: bytes, source_url: str) -> Iterator[RawProperty]:

@@ -13,8 +13,8 @@ from app.connectors.zuk.parser import ZukParser
 from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
-ZUK_BASE_URL = "https://www.portalzuk.com.br/imoveis"
-ZUK_SEARCH_URL = "https://www.portalzuk.com.br/imoveis?tipo=todos&pagina={page}"
+ZUK_BASE_URL = "https://www.portalzuk.com.br"
+ZUK_SEARCH_URL = "https://www.portalzuk.com.br/leilao-de-imoveis?pagina={page}"
 ZUK_MAX_PAGES = 20
 
 _HEADERS = {
@@ -43,8 +43,7 @@ class ZukConnector(BankConnector):
     def discover_sources(self) -> list[str]:
         pages = [ZUK_SEARCH_URL.format(page=p) for p in range(1, ZUK_MAX_PAGES + 1)]
         if self.uf:
-            # UF filtering via query param when available
-            return [f"{u}&uf={self.uf.upper()}" for u in pages]
+            return [f"{u}&estado={self.uf.upper()}" for u in pages]
         return pages
 
     def fetch_raw(self, source_url: str) -> bytes:

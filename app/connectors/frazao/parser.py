@@ -1,4 +1,10 @@
-"""Parser HTML do Frazão Leilões."""
+"""Parser HTML do Frazão Leilões (frazaoleiloes.com.br).
+
+Após renderização JS, cada lote aparece como div.item-bid dentro de
+#leilao-lista-lote. O link tem atributos data-lote-id, data-tipo e data-addr.
+O preço está em input[name="price"] dentro do mesmo item-bid.
+"""
+import re
 from collections.abc import Iterator
 
 from bs4 import BeautifulSoup
@@ -15,56 +21,65 @@ class FrazaoParser:
         if not raw_bytes:
             return
         soup = BeautifulSoup(raw_bytes, "html.parser")
-        cards = (
-            soup.select(".lote-card")
-            or soup.select(".item-lote")
-            or soup.select("[data-lote]")
-            or soup.select("article.card")
-        )
-        if not cards:
+        items = soup.select("#leilao-lista-lote .item-bid")
+        if not items:
+            items = soup.select(".item-bid")
+        if not items:
             logger.warning("frazao.parser.no_cards", url=source_url)
             return
-        for card in cards:
+        for item in items:
             try:
-                yield from self._parse_card(card, source_url)
+                yield from self._parse_item(item, source_url)
             except Exception as exc:
                 logger.warning("frazao.parser.card_error", error=str(exc))
 
-    def _parse_card(self, card, source_url: str) -> Iterator[RawProperty]:
-        ext = (card.get("data-lote") or card.get("data-id") or card.get("data-ref", "")).strip()
-        if not ext:
+    def _parse_item(self, item, source_url: str) -> Iterator[RawProperty]:
+        link_tag = item.select_one("a[data-lote-id]")
+        if not link_tag:
             return
-        link_tag = card.select_one("a[href]")
-        url = link_tag["href"] if link_tag else source_url
-        if url.startswith("/"):
-            url = _BASE_URL + url
+        lot_id = str(link_tag.get("data-lote-id", "")).strip()
+        if not lot_id:
+            return
+
+        href = str(link_tag.get("href", ""))
+        url = (f"{_BASE_URL}{href}" if href.startswith("/") else href) or source_url
+
+        title_el = item.select_one(".lote-information")
+        title = title_el.get_text(strip=True) if title_el else None
+
+        address = str(link_tag.get("data-addr", "")).strip() or None
+        prop_type = str(link_tag.get("data-tipo", "")).strip() or None
+
+        # Extract city/state from last segment of data-addr: "...Rua X - Recife/PE"
+        city, state = "", ""
+        if address:
+            city_state_match = re.search(r"-\s*([^/\-]+)/([A-Z]{2})\s*$", address)
+            if city_state_match:
+                city = city_state_match.group(1).strip()
+                state = city_state_match.group(2).strip()
+
+        price_input = item.select_one("input[name='price']")
+        current_value = price_input.get("value") if price_input else None
+
+        img_tag = item.select_one("img[src]")
+        photo = img_tag["src"] if img_tag else None
+        if photo and photo.startswith("/"):
+            photo = _BASE_URL + photo
 
         yield RawProperty(
-            external_code=ext,
+            external_code=lot_id,
             source_url=url,
             bank_code="frazao",
             source_name=_SOURCE_NAME,
             raw_data={
-                "external_code": ext,
-                "title": _t(card, "h2, h3, .titulo, .title, .nome"),
-                "current_value": _t(card, ".lance, .preco, .valor, [data-lance]"),
-                "appraisal_value": _t(card, ".avaliacao, [data-avaliacao], .valor-avaliacao"),
-                "address": _t(card, ".endereco, .local, .localizacao"),
-                "city": _t(card, ".cidade, [data-cidade]"),
-                "state": _t(card, ".uf, [data-uf], .estado"),
-                "sale_modality": _t(card, ".modalidade, .tipo-venda"),
-                "auction_date": _t(card, ".data-leilao, time, [data-data]"),
-                "property_type": _t(card, ".tipo-imovel, [data-tipo]"),
-                "area_total": _t(card, ".area, [data-area]"),
+                "external_code": lot_id,
+                "title": title,
+                "address": address,
+                "city": city,
+                "state": state,
+                "property_type": prop_type,
+                "current_value": current_value,
                 "official_url": url,
-                "photo_url": (card.select_one("img[src]") or {}).get("src"),
+                "photo_url": photo,
             },
         )
-
-
-def _t(tag, selector: str) -> str | None:
-    for s in selector.split(","):
-        el = tag.select_one(s.strip())
-        if el:
-            return el.get_text(strip=True) or None
-    return None

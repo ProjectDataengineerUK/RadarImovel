@@ -38,6 +38,8 @@ class SodreConnector(BankConnector):
         return [SODRE_SEARCH_URL.format(page=p) for p in range(1, SODRE_MAX_PAGES + 1)]
 
     def fetch_raw(self, source_url: str) -> bytes:
+        # Sodre blocks plain HTTP (403); Playwright required.
+        # networkidle (default) is sufficient — page loads synchronously.
         content = fetch_with_playwright(source_url)
         if not content:
             try:

@@ -19,7 +19,7 @@ def test_mega_extracts_two():
 
 def test_mega_external_codes():
     codes = {p.external_code for p in _props()}
-    assert codes == {"MEGA-101", "MEGA-102"}
+    assert codes == {"J12345", "J67890"}
 
 
 def test_mega_normalize_first():

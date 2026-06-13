@@ -8,7 +8,7 @@ FIXTURES = Path(__file__).parents[2] / "fixtures" / "html"
 
 def _props():
     raw = (FIXTURES / "frazao_list.html").read_bytes()
-    return list(FrazaoConnector().parse(raw, "https://www.frazaoleiloes.com.br/imoveis"))
+    return list(FrazaoConnector().parse(raw, "https://www.frazaoleiloes.com.br/lotes/busca/p/1"))
 
 
 def test_frazao_extracts_two():
@@ -19,7 +19,7 @@ def test_frazao_extracts_two():
 
 def test_frazao_external_codes():
     codes = {p.external_code for p in _props()}
-    assert codes == {"FRZ-401", "FRZ-402"}
+    assert codes == {"401", "402"}
 
 
 def test_frazao_normalize_first():

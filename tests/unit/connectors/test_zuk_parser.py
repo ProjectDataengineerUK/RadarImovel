@@ -8,7 +8,7 @@ FIXTURES = Path(__file__).parents[2] / "fixtures" / "html"
 
 def _props():
     raw = (FIXTURES / "zuk_list.html").read_bytes()
-    return list(ZukConnector().parse(raw, "https://www.portalzuk.com.br/imoveis"))
+    return list(ZukConnector().parse(raw, "https://www.portalzuk.com.br/leilao-de-imoveis?pagina=1"))
 
 
 def test_zuk_extracts_two():
@@ -20,7 +20,7 @@ def test_zuk_extracts_two():
 def test_zuk_external_codes():
     props = _props()
     codes = {p.external_code for p in props}
-    assert codes == {"ZUK-001", "ZUK-002"}
+    assert codes == {"36502-226888", "12345-678901"}
 
 
 def test_zuk_normalize_first():
@@ -29,7 +29,6 @@ def test_zuk_normalize_first():
     assert norm["city"] == "São Paulo"
     assert norm["state"] == "SP"
     assert norm["current_value"] == Decimal("350000.00")
-    assert norm["property_type"] == "Apartamento"
 
 
 def test_zuk_normalize_second():

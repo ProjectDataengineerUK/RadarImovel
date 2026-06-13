@@ -1,8 +1,9 @@
-"""Parser HTML do Portal Zuk.
+"""Parser HTML do Portal Zuk (portalzuk.com.br).
 
-Seletores baseados na estrutura observada em 2026-06 (cards de imóvel).
-Adaptar seletores se o layout mudar.
+Estrutura observada em 2026-06: listagem em /leilao-de-imoveis?pagina=N retorna
+30 cards .card-property por página. External code extraído do slug de URL.
 """
+import re
 from collections.abc import Iterator
 
 from bs4 import BeautifulSoup
@@ -10,6 +11,7 @@ from bs4 import BeautifulSoup
 from app.connectors.base import RawProperty
 from app.core.logging import logger
 
+_BASE_URL = "https://www.portalzuk.com.br"
 _SOURCE_NAME = "zuk_imoveis"
 
 
@@ -17,21 +19,11 @@ class ZukParser:
     def parse(self, raw_bytes: bytes, source_url: str) -> Iterator[RawProperty]:
         if not raw_bytes:
             return
-
         soup = BeautifulSoup(raw_bytes, "html.parser")
-
-        # Zuk usa cards com data-id ou classe "property-card" / "imovel-card"
-        cards = (
-            soup.select("[data-id]")
-            or soup.select(".property-card")
-            or soup.select(".imovel-card")
-            or soup.select("article.card")
-        )
-
+        cards = soup.select(".card-property")
         if not cards:
             logger.warning("zuk.parser.no_cards", url=source_url)
             return
-
         for card in cards:
             try:
                 yield from self._parse_card(card, source_url)
@@ -39,58 +31,55 @@ class ZukParser:
                 logger.warning("zuk.parser.card_error", url=source_url, error=str(exc))
 
     def _parse_card(self, card, source_url: str) -> Iterator[RawProperty]:
-        ext_code = (
-            card.get("data-id")
-            or card.get("data-cod")
-            or card.get("data-ref", "")
-        )
-        if not ext_code:
+        link_tag = card.select_one("a[href*='/imovel/']")
+        if not link_tag:
+            return
+        url = str(link_tag["href"])
+        if url.startswith("/"):
+            url = _BASE_URL + url
+
+        # External code from last URL segment: "36502-226888"
+        code_match = re.search(r"/(\d+-\d+)(?:\?|$)", url)
+        ext = code_match.group(1) if code_match else ""
+        if not ext:
             return
 
-        link_tag = card.select_one("a[href]")
-        detail_url = str(link_tag["href"]) if link_tag else source_url
-        if detail_url.startswith("/"):
-            detail_url = "https://www.portalzuk.com.br" + detail_url
+        # Address from .card-property-address ("City / UF- NeighborhoodStreet")
+        addr_el = card.select_one(".card-property-address")
+        addr_txt = addr_el.get_text(" ", strip=True) if addr_el else ""
 
-        title = _text(card, ".title, .titulo, h2, h3")
-        price_raw = _text(card, ".price, .preco, [data-preco], .valor")
-        address_raw = _text(card, ".address, .endereco, .localizacao")
-        modality_raw = _text(card, ".modality, .modalidade, .tipo-venda")
-        auction_raw = _text(card, ".auction-date, .data-leilao, .data")
-        state_raw = _text(card, ".state, .uf, [data-uf]")
-        city_raw = _text(card, ".city, .cidade, [data-cidade]")
-        type_raw = _text(card, ".type, .tipo, [data-tipo]")
-        area_raw = _text(card, ".area, [data-area]")
-        bedrooms_raw = _text(card, ".bedrooms, .quartos, [data-quartos]")
+        # Extract city and state from address prefix "City / UF"
+        city, state = "", ""
+        city_state_match = re.match(r"^([^/]+)/\s*([A-Z]{2})", addr_txt)
+        if city_state_match:
+            city = city_state_match.group(1).strip()
+            state = city_state_match.group(2).strip()
+
+        # Price from .card-property-price-value
+        price_el = card.select_one(".card-property-price-value")
+        current_value = price_el.get_text(strip=True) if price_el else None
+
+        # Area from .card-property-info
+        info_el = card.select_one(".card-property-info-label")
+        area = info_el.get_text(strip=True) if info_el else None
+
         img_tag = card.select_one("img[src]")
-        photo_url = img_tag["src"] if img_tag else None
+        photo = img_tag["src"] if img_tag else None
 
         yield RawProperty(
-            external_code=str(ext_code).strip(),
-            source_url=detail_url,
+            external_code=ext,
+            source_url=url,
             bank_code="zuk",
             source_name=_SOURCE_NAME,
             raw_data={
-                "title": title,
-                "current_value": price_raw,
-                "address": address_raw,
-                "sale_modality": modality_raw,
-                "auction_date": auction_raw,
-                "state": state_raw,
-                "city": city_raw,
-                "property_type": type_raw,
-                "area_total": area_raw,
-                "bedrooms": bedrooms_raw,
-                "official_url": detail_url,
-                "photo_url": photo_url,
-                "external_code": str(ext_code).strip(),
+                "external_code": ext,
+                "title": addr_txt,
+                "address": addr_txt,
+                "city": city,
+                "state": state,
+                "current_value": current_value,
+                "area_total": area,
+                "official_url": url,
+                "photo_url": photo,
             },
         )
-
-
-def _text(tag, selector: str) -> str | None:
-    for sel in selector.split(","):
-        el = tag.select_one(sel.strip())
-        if el:
-            return el.get_text(strip=True) or None
-    return None

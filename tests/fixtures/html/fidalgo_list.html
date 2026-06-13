@@ -1,24 +1,47 @@
 <!DOCTYPE html>
 <html><body>
-<article data-ref="FID-301">
-  <a href="/imovel/FID-301">Detalhes</a>
-  <h2>Apartamento Jardins - São Paulo</h2>
-  <span class="preco">R$ 790.000,00</span>
-  <span class="endereco">Rua Oscar Freire, 50</span>
-  <span class="cidade">São Paulo</span>
-  <span class="uf">SP</span>
-  <span class="modalidade">Leilão SFI</span>
-  <span class="data">25/07/2026</span>
-  <span class="tipo-imovel">Apartamento</span>
-  <span class="area">110</span>
-</article>
-<article data-ref="FID-302">
-  <a href="/imovel/FID-302">Detalhes</a>
-  <h2>Casa Condomínio - Curitiba</h2>
-  <span class="preco">R$ 430.000,00</span>
-  <span class="cidade">Curitiba</span>
-  <span class="uf">PR</span>
-  <span class="modalidade">Leilão Judicial</span>
-  <span class="tipo-imovel">Casa em Condomínio</span>
-</article>
+<div class="mb-4 back-11 lotePadrao">
+  <div class="row">
+    <div class="col-lg-4 col-sm-12 text-center">
+      <div class="lotePadraoNumero pt-0 h-100">
+        <img src="/fotos/301_01.jpg" />
+      </div>
+    </div>
+    <div class="col-lg-5" onclick="goTo('lote.php?idLote=301');" style="cursor:pointer">
+      <div class="col-12 lotePadraoBens">
+        <div>APARTAMENTO, 110 M2 DE ÁREA, JARDINS</div>
+        <div class="mt-2"><b>Local do bem: </b>Rua Oscar Freire, 50 - Jardins - SÃO PAULO/SP</div>
+      </div>
+    </div>
+    <div class="col-lg-3 text-center">
+      <div class="col-12 lotePadraoLanceInicial">Lance inicial<br/>R$ 790.000,00</div>
+      <div class="lotePadraoStatus" id="st301">Aberto para lances</div>
+    </div>
+  </div>
+</div>
+<div class="mb-4 back-11 lotePadrao">
+  <div class="row">
+    <div class="col-lg-4 col-sm-12 text-center">
+      <div class="lotePadraoNumero pt-0 h-100">
+        <img src="/fotos/302_01.jpg" />
+      </div>
+    </div>
+    <div class="col-lg-5" onclick="goTo('lote.php?idLote=302');" style="cursor:pointer">
+      <div class="col-12 lotePadraoBens">
+        <div>CASA EM CONDOMÍNIO</div>
+        <div class="mt-2"><b>Local do bem: </b>Rua das Flores, 200 - Batel - CURITIBA/PR</div>
+      </div>
+    </div>
+    <div class="col-lg-3 text-center">
+      <div class="col-12 lotePadraoLanceInicial">Lance inicial<br/>R$ 430.000,00</div>
+      <div class="lotePadraoStatus" id="st302">Aberto para lances</div>
+    </div>
+  </div>
+</div>
+<div class="mb-4 back-11 lotePadrao loteRetirado">
+  <div class="col-lg-5" onclick="goTo('lote.php?idLote=303');">
+    <div class="lotePadraoBens"><div>LOTE RETIRADO</div></div>
+  </div>
+  <div class="lotePadraoLanceInicial">R$ 100.000,00</div>
+</div>
 </body></html>
