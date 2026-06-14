@@ -22,6 +22,14 @@ const columns: ColumnDef<Property>[] = [
     size: 64,
   },
   {
+    accessorKey: "bank_name",
+    header: "Fonte",
+    cell: ({ getValue }) => {
+      const v = getValue() as string | null;
+      return <span className="text-xs text-gray-500 whitespace-nowrap">{v ?? "—"}</span>;
+    },
+  },
+  {
     accessorFn: (r) => `${r.city}/${r.state}`,
     id: "location",
     header: "Cidade/UF",
@@ -53,6 +61,16 @@ const columns: ColumnDef<Property>[] = [
     cell: ({ getValue }) => {
       const v = getValue() as string | null;
       return v ? formatDate(v) : "—";
+    },
+  },
+  {
+    accessorKey: "last_seen_at",
+    header: "Atualizado",
+    cell: ({ getValue }) => {
+      const v = getValue() as string | null;
+      return v ? (
+        <span className="text-xs text-gray-400">{formatDate(v)}</span>
+      ) : "—";
     },
   },
 ];
