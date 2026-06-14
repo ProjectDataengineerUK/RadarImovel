@@ -102,6 +102,43 @@ def process_message(session, event: dict) -> str:
     return "done"
 
 
+def run_batch() -> None:
+    """Batch mode: calculate risk for all active properties without a risk score."""
+    dry_run = os.environ.get("DRY_RUN", "").lower() == "true"
+    batch_size = int(os.environ.get("BATCH_SIZE", "50"))
+    log.info("batch.start", batch_size=batch_size, dry_run=dry_run)
+
+    with SessionLocal() as session:
+        scored_ids = session.query(PropertyRiskScore.property_id).subquery()
+        props = (
+            session.query(Property)
+            .filter(
+                Property.status == "active",
+                ~Property.id.in_(scored_ids),
+            )
+            .limit(batch_size)
+            .all()
+        )
+        log.info("batch.loaded", count=len(props))
+
+        processed = errors = 0
+        for prop in props:
+            try:
+                if not dry_run:
+                    result = process_message(session, {"property_id": str(prop.id)})
+                    if result != "error":
+                        processed += 1
+                    else:
+                        errors += 1
+                else:
+                    processed += 1
+            except Exception as exc:
+                log.error("batch.property_error", property_id=str(prop.id), error=str(exc))
+                errors += 1
+
+    log.info("batch.done", processed=processed, errors=errors)
+
+
 def run() -> None:
     dry_run = os.environ.get("DRY_RUN", "").lower() == "true"
     subscription = settings.pubsub_sub_risk
@@ -139,4 +176,7 @@ def run() -> None:
 
 
 if __name__ == "__main__":
-    run()
+    if os.environ.get("BATCH_MODE", "").lower() == "true":
+        run_batch()
+    else:
+        run()

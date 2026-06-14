@@ -45,7 +45,8 @@ def upload_raw(bucket_name: str, source: str, scope: str, raw_bytes: bytes, url:
 def publish_event(project_id: str, topic: str, event: dict) -> None:
     publisher = pubsub_v1.PublisherClient()
     topic_path = publisher.topic_path(project_id, topic)
-    publisher.publish(topic_path, json.dumps(event).encode())
+    future = publisher.publish(topic_path, json.dumps(event).encode())
+    future.result()  # raise immediately if topic is missing or publish fails
 
 
 def run(source_code: str, uf: str | None = None) -> None:
