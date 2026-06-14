@@ -85,8 +85,8 @@ def run(source_code: str, uf: str | None = None) -> None:
                 if not raw_bytes:
                     continue
 
-                if not dry_run and settings.gcs_bucket_name:
-                    upload_raw(settings.gcs_bucket_name, source_code, scope, raw_bytes, source_url)
+                if not dry_run and settings.gcs_bucket_raw:
+                    upload_raw(settings.gcs_bucket_raw, source_code, scope, raw_bytes, source_url)
 
                 for raw_prop in connector.parse(raw_bytes, source_url):
                     try:

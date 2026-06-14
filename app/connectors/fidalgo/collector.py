@@ -38,10 +38,20 @@ class FidalgoConnector(BankConnector):
         self.normalizer = FidalgoNormalizer()
 
     def discover_sources(self) -> list[str]:
-        # Homepage blocks httpx (403); Playwright bypasses bot detection.
+        # Try Playwright first (bypasses bot detection on JS-heavy pages).
         html_bytes = fetch_with_playwright(FIDALGO_HOME_URL)
         if not html_bytes:
-            logger.error("fidalgo.discover_failed", error="playwright returned empty")
+            # Fall back to direct HTTP — works on some Fidalgo mirrors/pages.
+            try:
+                with httpx.Client(headers=_HEADERS, timeout=30, follow_redirects=True) as client:
+                    resp = client.get(FIDALGO_HOME_URL)
+                    resp.raise_for_status()
+                    html_bytes = resp.content
+            except Exception as exc:
+                logger.error("fidalgo.discover_failed", error=str(exc))
+                return []
+        if not html_bytes:
+            logger.error("fidalgo.discover_failed", error="both playwright and httpx returned empty")
             return []
         try:
             html = html_bytes.decode("utf-8", errors="replace")

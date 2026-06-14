@@ -10,8 +10,8 @@ from app.connectors.playwright_utils import fetch_with_playwright
 from app.core.logging import logger
 
 SODRE_IMOVEIS_URL = "https://www.sodresantoro.com.br/leiloes/imoveis"
-SODRE_SEARCH_URL = "https://www.sodresantoro.com.br/leiloes/imoveis?page={page}"
-SODRE_MAX_PAGES = 15
+# Nuxt 3 SPA: ?page=N returns 404 for all N>0; pagination is client-side only.
+_SODRE_WAIT_SELECTOR = "a[href*='/leilao'], a[href*='/lote'], a[href*='/bem'], a[href*='/imovel']"
 
 _HEADERS = {
     "User-Agent": (
@@ -35,12 +35,17 @@ class SodreConnector(BankConnector):
         self.normalizer = SodreNormalizer()
 
     def discover_sources(self) -> list[str]:
-        return [SODRE_SEARCH_URL.format(page=p) for p in range(1, SODRE_MAX_PAGES + 1)]
+        # Nuxt 3 SPA: all property cards are on a single URL (client-side pagination).
+        return [SODRE_IMOVEIS_URL]
 
     def fetch_raw(self, source_url: str) -> bytes:
         # Sodre blocks plain HTTP (403); Playwright required.
-        # networkidle (default) is sufficient — page loads synchronously.
-        content = fetch_with_playwright(source_url)
+        # Wait for at least one auction link to confirm the listing is hydrated.
+        content = fetch_with_playwright(
+            source_url,
+            wait_until="networkidle",
+            wait_selector=_SODRE_WAIT_SELECTOR,
+        )
         if not content:
             try:
                 with httpx.Client(headers=_HEADERS, timeout=30, follow_redirects=True) as client:
