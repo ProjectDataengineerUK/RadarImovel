@@ -38,7 +38,7 @@ def run() -> None:
                 Property.official_url.isnot(None),
                 Property.official_url != "",
             )
-            .order_by(Property.created_at.desc())
+            .order_by(Property.first_seen_at.desc())
             .limit(_BATCH)
         )
         props = query.all()
