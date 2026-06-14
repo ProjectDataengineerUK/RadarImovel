@@ -59,7 +59,8 @@ export default function RadarIndexPage() {
   ) ?? [];
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10">
+    <main className="p-6 max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-sm p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
           Radar Index — Índice de Deságio em Leilões
@@ -75,7 +76,7 @@ export default function RadarIndexPage() {
         <select
           value={filterState}
           onChange={(e) => setFilterState(e.target.value)}
-          className="border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border rounded-lg px-3 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Todos</option>
           {STATES.map((s) => (
@@ -137,6 +138,7 @@ export default function RadarIndexPage() {
       <p className="mt-6 text-xs text-gray-400 text-center">
         Dados calculados mensalmente com base nos imóveis ativos monitorados pelo Radar Imóvel.
       </p>
+      </div>
     </main>
   );
 }

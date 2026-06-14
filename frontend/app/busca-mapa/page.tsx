@@ -57,7 +57,7 @@ function BuscaMapaContent() {
 
   return (
     <div className="h-screen flex flex-col">
-      <header className="bg-white border-b px-4 py-3 flex gap-3 items-end flex-wrap z-10 relative">
+      <header className="bg-white border-b px-4 py-3 flex gap-3 items-end flex-wrap z-10 relative text-gray-900">
         <h1 className="text-lg font-semibold text-gray-800 mr-4">Busca por Mapa</h1>
 
         <div className="flex gap-2 flex-wrap">
@@ -68,7 +68,7 @@ function BuscaMapaContent() {
               placeholder={{ state: "UF", city: "Cidade", max_price: "Preço máx (R$)", min_discount: "Desconto mín (%)" }[k]}
               value={filters[k]}
               onChange={(e) => setFilters((f) => ({ ...f, [k]: e.target.value }))}
-              className="border rounded px-2 py-1 text-sm w-36 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="border rounded px-2 py-1 text-sm w-36 text-gray-900 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           ))}
           <label className="flex items-center gap-1 text-sm text-gray-600">
@@ -79,7 +79,7 @@ function BuscaMapaContent() {
               max={200}
               value={filters.radius_km}
               onChange={(e) => setFilters((f) => ({ ...f, radius_km: Number(e.target.value) }))}
-              className="border rounded px-2 py-1 w-16 text-sm"
+              className="border rounded px-2 py-1 w-16 text-sm text-gray-900 bg-white"
             />
             km
           </label>

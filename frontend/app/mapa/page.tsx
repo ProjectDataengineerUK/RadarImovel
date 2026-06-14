@@ -30,13 +30,13 @@ function MapaContent() {
 
   return (
     <div className="flex h-[calc(100vh-64px)]">
-      <aside className="w-64 shrink-0 border-r bg-white p-4 space-y-4 overflow-y-auto">
-        <h1 className="text-lg font-bold">Mapa de Risco</h1>
+      <aside className="w-64 shrink-0 border-r bg-white p-4 space-y-4 overflow-y-auto text-gray-900">
+        <h1 className="text-lg font-bold text-gray-900">Mapa de Risco</h1>
 
         <div>
           <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Estado</label>
           <select
-            className="mt-1 w-full rounded-md border px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-md border px-2 py-1.5 text-sm text-gray-900 bg-white"
             value={uf ?? ""}
             onChange={(e) => setUf(e.target.value || undefined)}
           >
