@@ -1,22 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import type { RiskHeatmapFeature } from "@/lib/types";
 
-const RISK_COLORS: Record<string, string> = {
-  low: "#22c55e",
-  moderate: "#eab308",
-  elevated: "#f97316",
-  high: "#ef4444",
-  critical: "#18181b",
-};
+setOptions({
+  key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "",
+  v: "weekly",
+});
 
 function riskColor(avg: number): string {
-  if (avg <= 20) return RISK_COLORS.low;
-  if (avg <= 40) return RISK_COLORS.moderate;
-  if (avg <= 60) return RISK_COLORS.elevated;
-  if (avg <= 80) return RISK_COLORS.high;
-  return RISK_COLORS.critical;
+  if (avg <= 20) return "#22c55e";
+  if (avg <= 40) return "#eab308";
+  if (avg <= 60) return "#f97316";
+  if (avg <= 80) return "#ef4444";
+  return "#18181b";
 }
 
 interface Props {
@@ -24,49 +22,70 @@ interface Props {
 }
 
 export function RiskMap({ features }: Props) {
-  const mapRef = useRef<HTMLDivElement>(null);
+  const divRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const circlesRef = useRef<google.maps.Circle[]>([]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !mapRef.current) return;
+    if (!divRef.current) return;
+    let cancelled = false;
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const L = require("leaflet");
-    require("leaflet.heat");
+    const init = async () => {
+      await importLibrary("maps");
+      if (cancelled || !divRef.current) return;
 
-    const map = L.map(mapRef.current).setView([-15, -50], 4);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(map);
+      if (!mapRef.current) {
+        mapRef.current = new google.maps.Map(divRef.current, {
+          center: { lat: -15, lng: -50 },
+          zoom: 4,
+          mapTypeControl: false,
+          streetViewControl: false,
+        });
+      }
 
-    const heatPoints = features
-      .filter((f) => f.properties.lat != null && f.properties.lng != null)
-      .map((f) => [f.properties.lat!, f.properties.lng!, f.properties.risk_avg / 100]);
+      const map = mapRef.current;
 
-    if (heatPoints.length > 0) {
-      L.heatLayer(heatPoints, { radius: 35, blur: 20, maxZoom: 10 }).addTo(map);
-    }
+      circlesRef.current.forEach((c) => c.setMap(null));
+      circlesRef.current = [];
 
-    features.forEach((f) => {
-      if (f.properties.lat == null || f.properties.lng == null) return;
-      L.circleMarker([f.properties.lat, f.properties.lng], {
-        radius: 6,
-        color: riskColor(f.properties.risk_avg),
-        fillColor: riskColor(f.properties.risk_avg),
-        fillOpacity: 0.8,
-        weight: 1,
-      })
-        .bindPopup(
-          `<strong>${f.properties.city}/${f.properties.state}</strong><br/>
-           Risco médio: ${f.properties.risk_avg}<br/>
-           Imóveis: ${f.properties.property_count}`
-        )
-        .addTo(map);
-    });
+      const filtered = features.filter(
+        (f) => f.properties.lat != null && f.properties.lng != null
+      );
 
-    return () => {
-      map.remove();
+      const infoWindow = new google.maps.InfoWindow({});
+
+      filtered.forEach((f) => {
+        const baseRadius = 30000;
+        const count = f.properties.property_count ?? 1;
+        const radius = baseRadius + Math.min(count * 800, 80000);
+
+        const circle = new google.maps.Circle({
+          map,
+          center: { lat: f.properties.lat!, lng: f.properties.lng! },
+          radius,
+          fillColor: riskColor(f.properties.risk_avg),
+          fillOpacity: 0.6,
+          strokeColor: riskColor(f.properties.risk_avg),
+          strokeWeight: 1,
+          strokeOpacity: 0.8,
+          clickable: true,
+        });
+        circle.addListener("click", () => {
+          infoWindow.setContent(
+            `<div style="font-size:13px"><strong>${f.properties.city}/${f.properties.state}</strong><br/>
+             Risco médio: <b>${f.properties.risk_avg}</b><br/>
+             Imóveis: ${f.properties.property_count}</div>`
+          );
+          infoWindow.setPosition({ lat: f.properties.lat!, lng: f.properties.lng! });
+          infoWindow.open(map);
+        });
+        circlesRef.current.push(circle);
+      });
     };
+
+    init();
+    return () => { cancelled = true; };
   }, [features]);
 
-  return <div ref={mapRef} className="h-full w-full rounded-lg" />;
+  return <div ref={divRef} className="h-full w-full rounded-lg" />;
 }
