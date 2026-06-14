@@ -37,6 +37,8 @@ def risk_heatmap(
             Property.state,
             func.avg(PropertyRiskScore.score_total).label("risk_avg"),
             func.count(Property.id).label("property_count"),
+            func.avg(Property.latitude).label("lat"),
+            func.avg(Property.longitude).label("lng"),
         )
         .join(PropertyRiskScore, PropertyRiskScore.property_id == Property.id)
         .filter(Property.status == "active")
@@ -54,6 +56,8 @@ def risk_heatmap(
                 "state": r.state,
                 "risk_avg": round(float(r.risk_avg), 1),
                 "property_count": r.property_count,
+                "lat": float(r.lat) if r.lat is not None else None,
+                "lng": float(r.lng) if r.lng is not None else None,
             },
             "geometry": None,
         }
