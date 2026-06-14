@@ -54,20 +54,27 @@ class SodreParser:
                 break
 
         if not cards:
-            classes_found = sorted({
-                cl
-                for tag in soup.find_all(True)
+            # Log ALL unique classes (not filtered) for Tailwind sites
+            all_classes = sorted({
+                cl for tag in soup.find_all(True)
                 for cl in (tag.get("class") or [])
-                if any(
-                    k in cl.lower()
-                    for k in ("lot", "lote", "bem", "item", "card", "imovel", "auction")
-                )
-            })
+            })[:60]
+            # Log all unique IDs
+            all_ids = [t.get("id") for t in soup.find_all(id=True)][:20]
+            # Log link hrefs to find card URL pattern
+            hrefs = [a.get("href","") for a in soup.select("a[href]")
+                     if any(k in a.get("href","") for k in ("/lote", "/bem", "/leilao", "/imovel"))][:10]
+            # Log first 500 chars of body content
+            body = soup.find("body")
+            body_snippet = body.get_text(" ", strip=True)[:300] if body else ""
             logger.warning(
                 "sodre.parser.no_cards",
                 url=source_url,
                 html_size=len(raw_bytes),
-                relevant_classes=classes_found[:30],
+                all_classes=all_classes,
+                all_ids=all_ids,
+                lote_hrefs=hrefs,
+                body_snippet=body_snippet,
             )
             return
 

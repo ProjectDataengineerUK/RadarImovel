@@ -43,10 +43,9 @@ class FrazaoConnector(BankConnector):
         return [FRAZAO_SEARCH_URL.format(page=p) for p in range(1, FRAZAO_MAX_PAGES + 1)]
 
     def fetch_raw(self, source_url: str) -> bytes:
-        # Frazao uses client-side rendering; wait for .item-bid to appear
-        content = fetch_with_playwright(
-            source_url, wait_selector="#leilao-lista-lote .item-bid"
-        )
+        # Frazao uses client-side rendering. Container is #content_list_lote;
+        # networkidle (default) waits for JS to populate it.
+        content = fetch_with_playwright(source_url)
         if not content:
             try:
                 with httpx.Client(headers=_HEADERS, timeout=30, follow_redirects=True) as client:

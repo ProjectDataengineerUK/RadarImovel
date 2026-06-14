@@ -25,7 +25,23 @@ class FrazaoParser:
         if not items:
             items = soup.select(".item-bid")
         if not items:
-            logger.warning("frazao.parser.no_cards", url=source_url)
+            # Diagnose: log container presence and all top classes
+            has_container = bool(soup.select_one("#content_list_lote"))
+            all_ids = [t.get("id") for t in soup.find_all(id=True)][:20]
+            top_classes = sorted({
+                cl for tag in soup.find_all(True)
+                for cl in (tag.get("class") or [])
+            })[:40]
+            # Log first link hrefs to find card URL pattern
+            hrefs = [a.get("href","") for a in soup.select("a[href]") if "/lote" in a.get("href","")][:5]
+            logger.warning(
+                "frazao.parser.no_cards",
+                url=source_url,
+                has_content_list_lote=has_container,
+                ids=all_ids,
+                top_classes=top_classes,
+                lote_hrefs=hrefs,
+            )
             return
         for item in items:
             try:
