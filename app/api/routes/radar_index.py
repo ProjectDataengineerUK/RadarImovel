@@ -114,7 +114,9 @@ def _trend_label(delta: float | None) -> str | None:
 
 def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
     """Agrega deságio por município nos últimos 2 meses, com tendência e preço FipeZap."""
-    sql = text("""
+    uf_filter = "AND state = :uf" if state else ""
+    params: dict = {"uf": state.upper()} if state else {}
+    sql = text(f"""
         WITH monthly AS (
             SELECT
                 city,
@@ -128,7 +130,7 @@ def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
                 discount_percent IS NOT NULL
                 AND first_seen_at >= NOW() - INTERVAL '2 months'
                 AND city IS NOT NULL
-                AND (:uf IS NULL OR state = :uf)
+                {uf_filter}
             GROUP BY city, state, DATE_TRUNC('month', first_seen_at)
         ),
         with_trend AS (
@@ -168,7 +170,7 @@ def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
             LIMIT 1
         ) m ON true
     """)
-    rows = db.execute(sql, {"uf": state.upper() if state else None}).fetchall()
+    rows = db.execute(sql, params).fetchall()
     return CityIndexResponse(
         entries=[
             CityIndexEntry(
