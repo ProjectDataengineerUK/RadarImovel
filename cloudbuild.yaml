@@ -78,7 +78,9 @@ steps:
           radar-predict-drops \
           radar-process-alerts \
           radar-process-editais \
-          radar-process-matriculas; do
+          radar-process-matriculas \
+          radar-collect-judicial \
+          radar-collect-market-prices; do
           echo "Updating $$JOB..."
           gcloud run jobs update "$$JOB" \
             --image "$$IMAGE" \

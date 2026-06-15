@@ -111,7 +111,7 @@ resource "google_cloud_scheduler_job" "enrich_details_caixa" {
 # tos_compliant=false por padrão → job bloqueia até FORCE_TOS=true ser definido
 # após validação jurídica individual de cada ToS
 locals {
-  auctioneers = ["zuk", "mega", "sodre", "fidalgo", "frazao"]
+  auctioneers = ["zuk", "mega", "sodre", "fidalgo", "frazao", "lance_certo", "superleiloes"]
   # Leiloeiros: 2 disparos/dia (menos frequente que bancos)
   auctioneer_schedules = ["0 12 * * *", "0 20 * * *"]
   auctioneer_schedule_pairs = {

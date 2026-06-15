@@ -6,7 +6,7 @@ resource "google_vertex_ai_index" "rag_editais" {
   description  = "Índice vetorial para chunks de editais e matrículas (RAG)"
 
   metadata {
-    contents_delta_uri = "gs://${google_storage_bucket.docs.name}/rag/index_data/"
+    contents_delta_uri = "gs://${google_storage_bucket.radar_docs.name}/rag/index_data/"
     config {
       dimensions                  = 768
       approximate_neighbors_count = 150
