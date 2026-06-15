@@ -29,6 +29,7 @@ api = [
     "google-cloud-secret-manager>=2.20",
     "weasyprint>=62.0",
     "jinja2>=3.1",
+    "stripe>=10.0",
 ]
 job = [
     "httpx>=0.27",

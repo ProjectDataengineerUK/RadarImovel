@@ -12,10 +12,15 @@ class Plan(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
     code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    price_brl: Mapped[int] = mapped_column(Integer, nullable=False, default=0)  # centavos
+    description: Mapped[str | None] = mapped_column(String(255))
+    price_brl: Mapped[int] = mapped_column(Integer, nullable=False, default=0)          # centavos/mês
+    discount_brl: Mapped[int] = mapped_column(Integer, nullable=False, default=0)       # desconto anual em centavos
+    stripe_price_id_monthly: Mapped[str | None] = mapped_column(String(100))
+    stripe_price_id_annual: Mapped[str | None] = mapped_column(String(100))
     features: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     limits: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow, nullable=False)
 

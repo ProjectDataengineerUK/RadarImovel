@@ -17,14 +17,24 @@ router = APIRouter(prefix="/admin/plans", tags=["admin-plans"])
 class PlanCreate(BaseModel):
     code: str
     name: str
+    description: str | None = None
     price_brl: int = 0
+    discount_brl: int = 0
+    stripe_price_id_monthly: str | None = None
+    stripe_price_id_annual: str | None = None
+    sort_order: int = 0
     features: dict = {}
     limits: dict = {}
 
 
 class PlanUpdate(BaseModel):
     name: str | None = None
+    description: str | None = None
     price_brl: int | None = None
+    discount_brl: int | None = None
+    stripe_price_id_monthly: str | None = None
+    stripe_price_id_annual: str | None = None
+    sort_order: int | None = None
     features: dict | None = None
     limits: dict | None = None
     active: bool | None = None
@@ -40,12 +50,17 @@ def list_plans(
             "id": str(p.id),
             "code": p.code,
             "name": p.name,
+            "description": p.description,
             "price_brl": p.price_brl,
+            "discount_brl": p.discount_brl,
+            "stripe_price_id_monthly": p.stripe_price_id_monthly,
+            "stripe_price_id_annual": p.stripe_price_id_annual,
+            "sort_order": p.sort_order,
             "features": p.features,
             "limits": p.limits,
             "active": p.active,
         }
-        for p in db.query(Plan).order_by(Plan.price_brl).all()
+        for p in db.query(Plan).order_by(Plan.sort_order, Plan.price_brl).all()
     ]
 
 
@@ -64,7 +79,12 @@ def create_plan(
     plan = Plan(
         code=body.code,
         name=body.name,
+        description=body.description,
         price_brl=body.price_brl,
+        discount_brl=body.discount_brl,
+        stripe_price_id_monthly=body.stripe_price_id_monthly,
+        stripe_price_id_annual=body.stripe_price_id_annual,
+        sort_order=body.sort_order,
         features=body.features,
         limits=body.limits,
     )
@@ -86,7 +106,7 @@ def update_plan(
     if not plan:
         raise HTTPException(404, detail="Plano não encontrado")
 
-    before = {"name": plan.name, "price_brl": plan.price_brl,
+    before = {"name": plan.name, "price_brl": plan.price_brl, "discount_brl": plan.discount_brl,
                "features": plan.features, "limits": plan.limits, "active": plan.active}
 
     if body.features is not None:
@@ -101,8 +121,18 @@ def update_plan(
         plan.limits = body.limits
     if body.name is not None:
         plan.name = body.name
+    if body.description is not None:
+        plan.description = body.description
     if body.price_brl is not None:
         plan.price_brl = body.price_brl
+    if body.discount_brl is not None:
+        plan.discount_brl = body.discount_brl
+    if body.stripe_price_id_monthly is not None:
+        plan.stripe_price_id_monthly = body.stripe_price_id_monthly
+    if body.stripe_price_id_annual is not None:
+        plan.stripe_price_id_annual = body.stripe_price_id_annual
+    if body.sort_order is not None:
+        plan.sort_order = body.sort_order
     if body.active is not None:
         plan.active = body.active
 

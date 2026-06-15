@@ -84,6 +84,13 @@ class Settings(BaseSettings):
     pubsub_topic_matriculas: str = "matricula-events"
     pubsub_sub_matriculas: str = "matricula-events-sub"
 
+    # Stripe
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_publishable_key: str = ""
+    stripe_success_url: str = "https://radarimovel.com.br/planos?checkout=success"
+    stripe_cancel_url: str = "https://radarimovel.com.br/planos?checkout=cancelled"
+
     # Onda 4 — RAG / Vertex AI Vector Search
     vertex_index_id: str = ""
     vertex_index_endpoint_id: str = ""

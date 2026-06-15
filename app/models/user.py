@@ -16,6 +16,8 @@ class User(Base):
     firebase_uid: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False)  # PII — nunca logar, nunca expor
     telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger)
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(100))
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
     notification_channels: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     subscription_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("subscriptions.id"))
