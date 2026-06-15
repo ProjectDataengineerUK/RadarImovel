@@ -45,17 +45,19 @@ steps:
       - --platform
       - managed
 
-  # Run database migrations
+  # Update migrate job to new image, then run migrations
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - jobs
-      - execute
-      - radar-migrate
-      - --region
-      - "$_REGION"
-      - --wait
+      - -c
+      - |
+        gcloud run jobs update radar-migrate \
+          --image "$_REGION-docker.pkg.dev/$PROJECT_ID/radar/job:$SHORT_SHA" \
+          --region "$_REGION" \
+          --quiet
+        gcloud run jobs execute radar-migrate \
+          --region "$_REGION" \
+          --wait
 
   # Update all Cloud Run jobs with new job image
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
