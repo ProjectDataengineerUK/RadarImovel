@@ -36,6 +36,7 @@ class CityIndexEntry(BaseModel):
     avg_discount_pct: float
     median_discount_pct: float
     trend_delta: float | None
+    trend: str | None = None  # "up" | "down" | "stable"
     market_price_per_sqm: float | None = None
 
 
@@ -99,6 +100,16 @@ def get_radar_index(
             for r in rows
         ],
     )
+
+
+def _trend_label(delta: float | None) -> str | None:
+    if delta is None:
+        return None
+    if delta > 1.0:
+        return "up"
+    if delta < -1.0:
+        return "down"
+    return "stable"
 
 
 def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
@@ -167,6 +178,7 @@ def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
                 avg_discount_pct=float(r.avg_discount_pct),
                 median_discount_pct=float(r.median_discount_pct),
                 trend_delta=float(r.trend_delta) if r.trend_delta is not None else None,
+                trend=_trend_label(float(r.trend_delta) if r.trend_delta is not None else None),
                 market_price_per_sqm=float(r.market_price_per_sqm) if r.market_price_per_sqm is not None else None,
             )
             for r in rows

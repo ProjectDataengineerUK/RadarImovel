@@ -23,6 +23,7 @@ interface CityEntry {
   avg_discount_pct: number;
   median_discount_pct: number;
   trend_delta: number | null;
+  trend: "up" | "down" | "stable" | null;
   market_price_per_sqm: number | null;
 }
 
@@ -52,11 +53,12 @@ function DiscountBadge({ value }: { value: number }) {
   );
 }
 
-function TrendArrow({ delta }: { delta: number | null }) {
-  if (delta === null) return <span className="text-gray-400">—</span>;
-  if (delta > 0.5) return <span className="text-green-600 font-medium">+{delta.toFixed(1)}% ↑</span>;
-  if (delta < -0.5) return <span className="text-red-500 font-medium">{delta.toFixed(1)}% ↓</span>;
-  return <span className="text-gray-500">~</span>;
+function TrendArrow({ delta, trend }: { delta: number | null; trend?: "up" | "down" | "stable" | null }) {
+  const dir = trend ?? (delta === null ? null : delta > 1 ? "up" : delta < -1 ? "down" : "stable");
+  if (dir === null) return <span className="text-gray-400">—</span>;
+  if (dir === "up") return <span className="text-green-600 font-medium" title={delta != null ? `+${delta.toFixed(1)}%` : ""}>↑</span>;
+  if (dir === "down") return <span className="text-red-500 font-medium" title={delta != null ? `${delta.toFixed(1)}%` : ""}>↓</span>;
+  return <span className="text-gray-500" title="Estável">~</span>;
 }
 
 export default function RadarIndexPage() {
@@ -224,7 +226,7 @@ export default function RadarIndexPage() {
                           : <span className="text-gray-400">—</span>}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <TrendArrow delta={row.trend_delta} />
+                        <TrendArrow delta={row.trend_delta} trend={row.trend} />
                       </td>
                       <td className="px-4 py-3 text-right text-gray-500">
                         {row.sample_size.toLocaleString("pt-BR")}

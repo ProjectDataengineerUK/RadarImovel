@@ -17,6 +17,8 @@ import { AskEdital } from "@/components/AskEdital";
 import { ViabilityCalculator } from "@/components/ViabilityCalculator";
 import { MatriculaSection } from "@/components/MatriculaSection";
 import { usePlan } from "@/hooks/usePlan";
+import { MarketComparisonBadge } from "@/components/MarketComparisonBadge";
+import { SecondAuctionBadge } from "@/components/SecondAuctionBadge";
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +41,13 @@ export default function PropertyDetailPage() {
           <Link href="/imoveis" className="text-sm text-blue-600 hover:underline">← Voltar</Link>
           <h1 className="text-2xl font-bold mt-2">{p.title ?? `${p.property_type} em ${p.city}/${p.state}`}</h1>
           <p className="text-gray-500 text-sm mt-1">{p.address}{p.neighborhood ? `, ${p.neighborhood}` : ""} · {p.city}/{p.state}</p>
+          <div className="flex items-center gap-2 mt-2">
+            <SecondAuctionBadge auctionStage={p.auction_stage} dropPct={p.discount_percent} />
+            <MarketComparisonBadge
+              discountVsMarketPct={p.discount_vs_market_pct}
+              marketPricePerSqm={p.market_price_per_sqm}
+            />
+          </div>
         </div>
         <ScoreBadge score={p.opportunity_score} className="text-base px-3 py-1" />
       </div>
