@@ -32,6 +32,10 @@ export interface Property {
   last_seen_at: string;
   edital_url?: string | null;
   auctioneer_name?: string | null;
+  auction_stage?: string | null;
+  discount_vs_market_pct?: number | null;
+  market_price_per_sqm?: number | null;
+  process_number?: string | null;
 }
 
 export interface Encumbrance {

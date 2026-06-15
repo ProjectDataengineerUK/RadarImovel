@@ -19,9 +19,10 @@ function riskColor(avg: number): string {
 
 interface Props {
   features: RiskHeatmapFeature[];
+  onCityClick?: (city: string, state: string) => void;
 }
 
-export function RiskMap({ features }: Props) {
+export function RiskMap({ features, onCityClick }: Props) {
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const circlesRef = useRef<google.maps.Circle[]>([]);
@@ -78,6 +79,7 @@ export function RiskMap({ features }: Props) {
           );
           infoWindow.setPosition({ lat: f.properties.lat!, lng: f.properties.lng! });
           infoWindow.open(map);
+          onCityClick?.(f.properties.city, f.properties.state);
         });
         circlesRef.current.push(circle);
       });
