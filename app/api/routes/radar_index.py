@@ -152,7 +152,7 @@ def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
         LEFT JOIN LATERAL (
             SELECT price_per_sqm_sale
             FROM market_prices
-            WHERE LOWER(city) = LOWER(a.city) AND uf = a.uf
+            WHERE LOWER(city) = LOWER(a.city) AND UPPER(uf) = UPPER(a.uf)
             ORDER BY reference_month DESC
             LIMIT 1
         ) m ON true
