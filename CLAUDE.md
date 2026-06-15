@@ -2,7 +2,7 @@
 
 > Plataforma de inteligência para monitorar leilões e vendas de imóveis de bancos públicos brasileiros (Caixa, Banco do Brasil, BRB, BNB, Banco da Amazônia, Banrisul, Banestes). O sistema coleta automaticamente os imóveis disponíveis, detecta mudanças de preço e status, calcula um score de oportunidade, lê editais com IA e envia alertas personalizados por Telegram/WhatsApp/e-mail.
 >
-> **Status:** Fases 1–3 **shipped** + features de Fase 4 em andamento. Fase 1 (Caixa), Fase 2 (IA nos editais via Gemini) e Fase 3 (conectores para os 7 bancos) concluídas com suíte de testes passando. Da Fase 4 já foram entregues o Mapa de Risco multidimensional (score 0–100) e a ingestão de geodados públicos (`radar-load-geodata`). Pendente: validar coleta real dos bancos em produção e provisionar a infra GCP. Repo: https://github.com/ProjectDataengineerUK/RadarImovel
+> **Status:** Fases 1–5 **shipped**. 16 fontes monitoradas (7 bancos + 5 leiloeiros + judicial + TJSP + Lance Certo + Superleilões), detector de 2ª Praça, comparação FipeZap, calculadora ROI, Radar Index por município. 339/339 testes passando. Repo: https://github.com/ProjectDataengineerUK/RadarImovel
 
 ---
 
@@ -34,11 +34,11 @@ radar-imovel/
 ├── app/
 │   ├── core/             # config, database (SQLAlchemy + Cloud SQL connector), logging
 │   ├── models/           # base, bank, property, user, document (SQLAlchemy)
-│   ├── connectors/       # base.py (interface BankConnector) + registry + 7 bancos (caixa, bb, brb, bnb, basa, banrisul, banestes)
-│   ├── agents/           # deduplicator, change_detector, score_agent, alert_agent
-│   ├── services/         # notification (canal abstrato), telegram, geocoding
-│   └── api/              # main.py (FastAPI), middleware/auth.py, routes/ (properties, watchlists, users, alerts, admin)
-├── jobs/                 # collect_bank.py (genérico), process_alerts, process_editais, enrich_details, calculate_risk, load_geodata
+│   ├── connectors/       # base.py (interface BankConnector) + registry + 16 fontes (7 bancos + 5 leiloeiros + judicial + tjsp + lance_certo + superleiloes)
+│   ├── agents/           # deduplicator, change_detector, score_agent, alert_agent, second_auction_detector
+│   ├── services/         # notification (canal abstrato), telegram, geocoding, fipezap
+│   └── api/              # main.py (FastAPI), middleware/auth.py, routes/ (properties, watchlists, users, alerts, admin, market, risk)
+├── jobs/                 # collect_bank.py (genérico), collect_judicial.py, collect_market_prices.py, process_alerts, process_editais, enrich_details, calculate_risk, load_geodata
 ├── migrations/           # Alembic (env.py + versions/001_initial_schema.py)
 ├── frontend/             # Next.js 14: app/ (login, dashboard, imoveis, alertas, configuracoes, admin), components/, hooks/, lib/
 ├── infra/terraform/      # cloud_sql, cloud_run, pubsub, cloud_storage, scheduler, iam, secret_manager, variables, outputs, main
@@ -53,7 +53,7 @@ radar-imovel/
 | Arquivo | Função |
 |---------|--------|
 | `context.md` | Especificação completa do produto: fontes, agentes, arquitetura GCP, banco de dados, dashboard e fluxos |
-| `.claude/sdd/features/` | Documentos SDD das Fases 1–3 (`BRAINSTORM_`, `DEFINE_`, `DESIGN_`); features de Fase 4 já arquivadas em `.claude/sdd/archive/` |
+| `.claude/sdd/features/` | Documentos SDD da Fase 5 (`BRAINSTORM_`, `DEFINE_`, `DESIGN_`); Fases 1–4 arquivadas em `.claude/sdd/archive/` |
 | `app/connectors/base.py` | Interface abstrata `BankConnector` (discover_sources / fetch_raw / parse / normalize) — contrato para novos bancos |
 | `migrations/versions/001_initial_schema.py` | Schema completo: properties, property_changes, banks, sources, users, watchlists, alerts, documents |
 | `pyproject.toml` | Dependências e configuração de ferramentas (ruff, pytest, mypy) |
@@ -105,7 +105,8 @@ cd frontend && npm install && npm run dev     # dashboard em http://localhost:30
 - **Fase 1:** ✅ shipped — Caixa: coleta de lista por UF, detecção de novos imóveis, alerta Telegram, painel simples
 - **Fase 2:** ✅ shipped (2026-06-08) — leitura de editais com Gemini (`edital_extractor`), score enriquecido, pipeline Pub/Sub `edital-events` → job `radar-process-editais`
 - **Fase 3:** ✅ shipped (2026-06-08) — conectores para os 7 bancos via `CONNECTOR_REGISTRY` + job genérico `collect_bank` (94/94 testes)
-- **Fase 4:** 🔨 em andamento — já entregues: Mapa de Risco multidimensional 0–100 (2026-06-10) e ingestão de geodados públicos `radar-load-geodata` (2026-06-11); pendentes: preço por m², relatórios, comparação com mercado
+- **Fase 4:** ✅ shipped (2026-06-11) — Mapa de Risco multidimensional 0–100, ingestão de geodados públicos (`radar-load-geodata`)
+- **Fase 5:** ✅ shipped (2026-06-15) — 16 fontes (judicial DataJud, Lance Certo, Superleilões, TJSP), detector de 2ª Praça (queda ≥40%), comparação FipeZap, calculadora ROI, Radar Index por município; 339/339 testes
 
 Relatórios de ship em `.claude/sdd/reports/` e features arquivadas em `.claude/sdd/archive/`.
 

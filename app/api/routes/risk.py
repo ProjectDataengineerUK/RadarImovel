@@ -105,6 +105,19 @@ def download_risk_report(
         raise HTTPException(status_code=404, detail="Risk score not calculated yet")
 
     from app.risk.pdf_report import generate_report
+    import json
+    from app.models.document import Document
+
+    # Edital IA extraction
+    edital_summary = None
+    edital_doc = db.query(Document).filter_by(property_id=property_id, document_type="edital").first()
+    if edital_doc and edital_doc.processing_status == "done" and edital_doc.ai_summary:
+        try:
+            edital_summary = json.loads(edital_doc.ai_summary)
+        except (TypeError, ValueError):
+            pass
+
+    area_sqm = float(prop.area_total or prop.area_private or 0) or None
 
     property_data = {
         "address": prop.address,
@@ -115,6 +128,14 @@ def download_risk_report(
         "discount_percent": float(prop.discount_percent) if prop.discount_percent else None,
         "occupancy_status": prop.occupancy_status,
         "sale_modality": prop.sale_modality,
+        # Fase 5
+        "auction_stage": getattr(prop, "auction_stage", None),
+        "process_number": getattr(prop, "process_number", None),
+        "auctioneer_name": prop.auctioneer_name,
+        "market_price_per_sqm": float(prop.market_price_per_sqm) if getattr(prop, "market_price_per_sqm", None) else None,
+        "discount_vs_market_pct": float(prop.discount_vs_market_pct) if getattr(prop, "discount_vs_market_pct", None) else None,
+        "area_sqm": area_sqm,
+        "edital_summary": edital_summary,
     }
     score_data = _serialize_score(score)
     pdf_bytes = generate_report(property_data, score_data)
