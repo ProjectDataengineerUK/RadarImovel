@@ -77,11 +77,11 @@ steps:
           radar-process-alerts \
           radar-process-editais \
           radar-process-matriculas; do
-          echo "Updating $JOB..."
-          gcloud run jobs update "$JOB" \
-            --image "$IMAGE" \
+          echo "Updating $$JOB..."
+          gcloud run jobs update "$$JOB" \
+            --image "$$IMAGE" \
             --region "$_REGION" \
-            --quiet || echo "WARNING: failed to update $JOB (may not exist yet)"
+            --quiet || echo "WARNING: failed to update $$JOB (may not exist yet)"
         done
 
 substitutions:
