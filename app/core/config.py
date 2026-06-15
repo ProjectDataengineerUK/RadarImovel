@@ -91,6 +91,10 @@ class Settings(BaseSettings):
     stripe_success_url: str = "https://radarimovel.com.br/planos?checkout=success"
     stripe_cancel_url: str = "https://radarimovel.com.br/planos?checkout=cancelled"
 
+    # Acesso e segurança
+    admin_emails: str = ""   # e-mails separados por vírgula que recebem role=admin (ex: "jon@x.com,foo@y.com")
+    open_signup: bool = True  # False = auto-registro desativado; só admin cria usuários via /admin/users
+
     # Onda 4 — RAG / Vertex AI Vector Search
     vertex_index_id: str = ""
     vertex_index_endpoint_id: str = ""
