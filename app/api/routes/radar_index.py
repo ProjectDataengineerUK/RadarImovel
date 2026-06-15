@@ -52,7 +52,7 @@ class HotspotEntry(BaseModel):
     trend_delta: float | None
 
 
-@router.get("", response_model=RadarIndexResponse)
+@router.get("", response_model=RadarIndexResponse | CityIndexResponse)
 def get_radar_index(
     period: str | None = Query(None, description="Período YYYY-MM; padrão = mais recente"),
     state: str | None = Query(None, description="Filtro por UF (ex: SP)"),
