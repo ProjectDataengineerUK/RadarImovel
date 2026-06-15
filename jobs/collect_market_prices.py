@@ -38,8 +38,9 @@ def main() -> None:
             city = row.get("city", "")
             uf = row.get("uf", "")
             ptype = row.get("property_type", "Apartamento")
-            sqm = row.get("price_per_sqm")
-            if not city or sqm is None:
+            sqm_sale = row.get("price_per_sqm_sale")
+            sqm_rent = row.get("price_per_sqm_rent")
+            if not city or (sqm_sale is None and sqm_rent is None):
                 continue
 
             existing = (
@@ -48,14 +49,20 @@ def main() -> None:
                 .first()
             )
             if existing:
-                existing.price_per_sqm = sqm
+                if sqm_sale is not None:
+                    existing.price_per_sqm_sale = sqm_sale
+                    existing.price_per_sqm = sqm_sale
+                if sqm_rent is not None:
+                    existing.price_per_sqm_rent = sqm_rent
             else:
                 session.add(
                     MarketPrice(
                         city=city,
                         uf=uf,
                         property_type=ptype,
-                        price_per_sqm=sqm,
+                        price_per_sqm=sqm_sale,
+                        price_per_sqm_sale=sqm_sale,
+                        price_per_sqm_rent=sqm_rent,
                         reference_month=REFERENCE_MONTH,
                         source="fipezap",
                     )

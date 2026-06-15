@@ -24,8 +24,9 @@ class JudicialConnector(BankConnector):
     source_type = "court"
     tos_compliant = True
 
-    def __init__(self, tribunal: str = "TRT2", days_back: int = 30) -> None:
-        self._tribunal = tribunal.upper()
+    def __init__(self, tribunal: str | None = None, days_back: int = 30) -> None:
+        import os
+        self._tribunal = (tribunal or os.environ.get("TRIBUNAL", "TRT2")).upper()
         self._days_back = days_back
         self._client = DataJudClient()
         self._parser = JudicialParser(tribunal=self._tribunal)

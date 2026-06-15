@@ -60,11 +60,9 @@ class SecondAuctionDetector:
         old_minimum: Decimal,
         new_minimum: Decimal,
         drop: float,
-        publisher,
-        topic: str | None,
+        publisher=None,
+        topic: str | None = None,
     ) -> None:
-        if not publisher or not topic:
-            return
         payload = {
             "event_type": "segunda_praca",
             "property_id": str(property_id),
@@ -74,6 +72,14 @@ class SecondAuctionDetector:
             "drop_pct": round(drop * 100, 1),
         }
         try:
+            if publisher is None:
+                from google.cloud import pubsub_v1
+                from app.core.config import get_settings
+                _settings = get_settings()
+                publisher = pubsub_v1.PublisherClient()
+                topic = publisher.topic_path(
+                    _settings.pubsub_project_id, _settings.pubsub_topic_events
+                )
             future = publisher.publish(topic, json.dumps(payload).encode())
             future.result(timeout=10)
         except Exception as exc:

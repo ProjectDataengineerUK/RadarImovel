@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 
-from app.jobs.collect_bank import run_connector
+from jobs.collect_bank import run_connector
 
 from app.connectors import SOURCE_REGISTRY
 from app.core.database import SessionLocal
@@ -30,12 +30,16 @@ def main() -> None:
 
     logger.info("collect_judicial.start", tribunal=TRIBUNAL, days_back=DAYS_BACK)
     try:
-        connector = connector_cls(days_back=DAYS_BACK)  # type: ignore[call-arg]
+        connector = connector_cls(tribunal=TRIBUNAL, days_back=DAYS_BACK)  # type: ignore[call-arg]
     except TypeError:
-        connector = connector_cls()
+        try:
+            connector = connector_cls(days_back=DAYS_BACK)  # type: ignore[call-arg]
+        except TypeError:
+            connector = connector_cls()
 
+    bank_code = "judicial" if source_key == "judicial" else source_key
     with SessionLocal() as session:
-        total = run_connector(connector, session)
+        total = run_connector(connector, session, bank_code=bank_code)
         logger.info("collect_judicial.done", tribunal=TRIBUNAL, total=total)
 
 

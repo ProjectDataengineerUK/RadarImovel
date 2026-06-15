@@ -200,6 +200,83 @@ def run(bank: str, uf: str | None = None, fetch_detail: bool = True) -> None:
     log.info("job.done", bank=bank, scope=scope, **stats)
 
 
+def run_connector(connector, session, bank_code: str = "judicial") -> int:
+    """Run collection for a pre-instantiated connector against an existing session.
+
+    Used by specialized jobs (e.g. collect_judicial) that configure their own
+    connector before delegating the collection loop here.
+    Returns total properties parsed.
+    """
+    dry_run = os.environ.get("DRY_RUN", "").lower() == "true"
+    bank_row = session.query(Bank).filter_by(code=bank_code).first()
+    if not bank_row:
+        log.error("job.bank_not_found_connector", bank=bank_code)
+        return 0
+
+    total = 0
+    for source_url in connector.discover_sources():
+        try:
+            raw_bytes = connector.fetch_raw(source_url)
+            if not raw_bytes:
+                continue
+
+            for raw_prop in connector.parse(raw_bytes, source_url):
+                try:
+                    normalized = connector.normalize(raw_prop)
+                    normalized["opportunity_score"] = calculate_score(normalized)
+                    content_hash = compute_content_hash(normalized)
+                    normalized["content_hash"] = content_hash
+                    total += 1
+
+                    if dry_run:
+                        continue
+
+                    existing = find_existing(session, raw_prop.external_code, bank_row.id)
+                    if existing is None:
+                        normalized.pop("bank_code", None)
+                        prop = Property(bank_id=bank_row.id, **normalized)
+                        session.add(prop)
+                        session.flush()
+                        publish_event(
+                            settings.pubsub_project_id,
+                            settings.pubsub_topic_events,
+                            {"property_id": str(prop.id), "event_type": "new"},
+                        )
+                    elif existing.content_hash != content_hash:
+                        changes = detect_and_record_changes(session, existing, normalized)
+                        for field, val in normalized.items():
+                            if hasattr(existing, field):
+                                setattr(existing, field, val)
+                        existing.last_seen_at = datetime.now(UTC)
+                        if changes:
+                            publish_event(
+                                settings.pubsub_project_id,
+                                settings.pubsub_topic_events,
+                                {
+                                    "property_id": str(existing.id),
+                                    "event_type": "changed",
+                                    "changes": [c.field_name for c in changes],
+                                },
+                            )
+                    else:
+                        existing.last_seen_at = datetime.now(UTC)
+
+                except Exception as exc:
+                    log.error(
+                        "job.property_error",
+                        bank=bank_code,
+                        external_code=raw_prop.external_code,
+                        error=str(exc),
+                    )
+
+            if not dry_run:
+                session.commit()
+        except Exception as exc:
+            log.error("job.source_error", bank=bank_code, source_url=source_url, error=str(exc))
+
+    return total
+
+
 if __name__ == "__main__":
     bank = os.environ.get("BANK", "").strip()
     if not bank:
