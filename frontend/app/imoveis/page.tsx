@@ -136,6 +136,32 @@ export default function ImoveisPage() {
               />
             </div>
 
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Fonte</label>
+              <select
+                className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                value={filters.source_type ?? ""}
+                onChange={(e) => set("source_type", e.target.value)}
+              >
+                <option value="">Todas as fontes</option>
+                <option value="bank">Banco</option>
+                <option value="auctioneer">Leiloeiro</option>
+                <option value="judicial">Judicial</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Praça</label>
+              <select
+                className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                value={filters.auction_stage ?? ""}
+                onChange={(e) => set("auction_stage", e.target.value)}
+              >
+                <option value="">Todas</option>
+                <option value="segunda_praca">Apenas 2ª Praça</option>
+              </select>
+            </div>
+
             <button
               onClick={() => { setFilters({}); setPage(0); }}
               className="w-full text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
@@ -181,8 +207,13 @@ export default function ImoveisPage() {
                           {p.city}, {p.state}
                         </Link>
                         {p.neighborhood && <p className="text-xs text-gray-500 mt-0.5">{p.neighborhood}</p>}
-                        <div className="flex gap-1 mt-1">
+                        <div className="flex gap-1 mt-1 flex-wrap">
                           {p.auction_stage === "segunda_praca" && <SecondAuctionBadge />}
+                          {p.source_type === "judicial" && (
+                            <span className="inline-flex items-center text-xs px-2 py-0.5 rounded font-semibold bg-purple-500/10 text-purple-400 ring-1 ring-purple-500/20">
+                              Judicial
+                            </span>
+                          )}
                           {p.discount_vs_market_pct != null && (
                             <MarketComparisonBadge discountVsMarketPct={p.discount_vs_market_pct} />
                           )}

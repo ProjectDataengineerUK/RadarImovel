@@ -80,6 +80,8 @@ def list_properties(
     min_discount: float | None = Query(None),
     occupancy_status: str | None = Query(None),
     sale_modality: str | None = Query(None),
+    auction_stage: str | None = Query(None),
+    source_type: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -99,6 +101,10 @@ def list_properties(
         q = q.filter(Property.occupancy_status == occupancy_status)
     if sale_modality:
         q = q.filter(Property.sale_modality.ilike(f"%{sale_modality}%"))
+    if auction_stage:
+        q = q.filter(Property.auction_stage == auction_stage)
+    if source_type:
+        q = q.filter(Property.source_type == source_type)
 
     total = q.count()
     items = q.order_by(Property.opportunity_score.desc()).offset(offset).limit(limit).all()
