@@ -31,17 +31,28 @@ def risk_heatmap(
     db: Session = Depends(get_db),
     _user=Depends(get_current_user),
 ):
+    # LEFT JOIN so municipalities without a risk score still appear, using
+    # discount_percent as a proxy (scaled 0-100) until scores are computed.
     q = (
         db.query(
             Property.city,
             Property.state,
-            func.avg(PropertyRiskScore.score_total).label("risk_avg"),
+            func.avg(
+                func.coalesce(
+                    PropertyRiskScore.score_total,
+                    func.least(Property.discount_percent, 100),
+                )
+            ).label("risk_avg"),
             func.count(Property.id).label("property_count"),
             func.avg(Property.latitude).label("lat"),
             func.avg(Property.longitude).label("lng"),
         )
-        .join(PropertyRiskScore, PropertyRiskScore.property_id == Property.id)
-        .filter(Property.status == "active")
+        .outerjoin(PropertyRiskScore, PropertyRiskScore.property_id == Property.id)
+        .filter(
+            Property.status == "active",
+            Property.latitude.isnot(None),
+            Property.longitude.isnot(None),
+        )
         .group_by(Property.city, Property.state)
     )
     if uf:
@@ -54,10 +65,10 @@ def risk_heatmap(
             "properties": {
                 "city": r.city,
                 "state": r.state,
-                "risk_avg": round(float(r.risk_avg), 1),
+                "risk_avg": round(float(r.risk_avg), 1) if r.risk_avg is not None else 0.0,
                 "property_count": r.property_count,
-                "lat": float(r.lat) if r.lat is not None else None,
-                "lng": float(r.lng) if r.lng is not None else None,
+                "lat": float(r.lat),
+                "lng": float(r.lng),
             },
             "geometry": None,
         }

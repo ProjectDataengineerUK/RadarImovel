@@ -36,6 +36,7 @@ class CityIndexEntry(BaseModel):
     avg_discount_pct: float
     median_discount_pct: float
     trend_delta: float | None
+    market_price_per_sqm: float | None = None
 
 
 class CityIndexResponse(BaseModel):
@@ -101,7 +102,7 @@ def get_radar_index(
 
 
 def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
-    """Agrega deságio por município nos últimos 2 meses, com tendência."""
+    """Agrega deságio por município nos últimos 2 meses, com tendência e preço FipeZap."""
     sql = text("""
         WITH monthly AS (
             SELECT
@@ -131,16 +132,30 @@ def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
                     PARTITION BY city, uf ORDER BY period
                 ) AS trend_delta
             FROM monthly
+        ),
+        aggregated AS (
+            SELECT city, uf, SUM(sample_size) AS sample_size,
+                   AVG(avg_discount_pct) AS avg_discount_pct,
+                   AVG(median_discount_pct) AS median_discount_pct,
+                   MAX(trend_delta) AS trend_delta
+            FROM with_trend
+            WHERE period = (SELECT MAX(period) FROM monthly)
+            GROUP BY city, uf
+            ORDER BY avg_discount_pct DESC
+            LIMIT 200
         )
-        SELECT city, uf, SUM(sample_size) AS sample_size,
-               AVG(avg_discount_pct) AS avg_discount_pct,
-               AVG(median_discount_pct) AS median_discount_pct,
-               MAX(trend_delta) AS trend_delta
-        FROM with_trend
-        WHERE period = (SELECT MAX(period) FROM monthly)
-        GROUP BY city, uf
-        ORDER BY avg_discount_pct DESC
-        LIMIT 200
+        SELECT
+            a.city, a.uf, a.sample_size, a.avg_discount_pct,
+            a.median_discount_pct, a.trend_delta,
+            m.price_per_sqm_sale AS market_price_per_sqm
+        FROM aggregated a
+        LEFT JOIN LATERAL (
+            SELECT price_per_sqm_sale
+            FROM market_prices
+            WHERE LOWER(city) = LOWER(a.city) AND uf = a.uf
+            ORDER BY reference_month DESC
+            LIMIT 1
+        ) m ON true
     """)
     rows = db.execute(sql, {"uf": state.upper() if state else None}).fetchall()
     return CityIndexResponse(
@@ -152,6 +167,7 @@ def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
                 avg_discount_pct=float(r.avg_discount_pct),
                 median_discount_pct=float(r.median_discount_pct),
                 trend_delta=float(r.trend_delta) if r.trend_delta is not None else None,
+                market_price_per_sqm=float(r.market_price_per_sqm) if r.market_price_per_sqm is not None else None,
             )
             for r in rows
         ]

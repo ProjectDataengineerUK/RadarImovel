@@ -139,3 +139,63 @@ def health_check(
         return {"status": "ok", "db": "connected"}
     except Exception as exc:
         return {"status": "error", "db": str(exc)}
+
+
+def _run_geocode_batch(batch: int, delay_ms: int) -> None:
+    """Background geocoding: populates lat/lng for properties that lack it."""
+    import asyncio
+    import time
+    import structlog
+    from app.core.database import SessionLocal
+    from app.services.geocoding import _geocode_nominatim, cep_to_latlong
+
+    log = structlog.get_logger()
+    geocoded = 0
+    failed = 0
+
+    with SessionLocal() as session:
+        props = (
+            session.query(Property)
+            .filter(Property.latitude.is_(None))
+            .order_by(Property.first_seen_at.desc())
+            .limit(batch)
+            .all()
+        )
+        log.info("admin.geocode_batch.start", count=len(props))
+
+        for prop in props:
+            coords = None
+            if prop.zipcode:
+                try:
+                    coords = asyncio.run(cep_to_latlong(prop.zipcode))
+                except Exception:
+                    pass
+            if not coords and prop.city and prop.state:
+                try:
+                    coords = asyncio.run(_geocode_nominatim(f"{prop.city}, {prop.state}, Brasil"))
+                except Exception:
+                    pass
+
+            if coords:
+                prop.latitude, prop.longitude = coords
+                geocoded += 1
+            else:
+                failed += 1
+
+            time.sleep(delay_ms / 1000)
+
+        session.commit()
+
+    log.info("admin.geocode_batch.done", geocoded=geocoded, failed=failed)
+
+
+@router.post("/geocode-batch")
+def geocode_batch(
+    background_tasks: BackgroundTasks,
+    batch: int = 200,
+    delay_ms: int = 1100,
+    _: User = Depends(require_role("operador")),
+):
+    """Geocodifica em background propriedades sem lat/lng (Nominatim 1 req/s)."""
+    background_tasks.add_task(_run_geocode_batch, batch, delay_ms)
+    return {"started": True, "batch": batch, "delay_ms": delay_ms}

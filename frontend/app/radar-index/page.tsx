@@ -23,6 +23,7 @@ interface CityEntry {
   avg_discount_pct: number;
   median_discount_pct: number;
   trend_delta: number | null;
+  market_price_per_sqm: number | null;
 }
 
 interface RadarIndexResponse {
@@ -201,6 +202,7 @@ export default function RadarIndexPage() {
                     <th className="px-4 py-3 text-left font-medium text-gray-500">UF</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500">Deságio médio</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500">Mediana</th>
+                    <th className="px-4 py-3 text-right font-medium text-gray-500">FipeZap/m²</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500">Tendência</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500">Imóveis</th>
                   </tr>
@@ -215,6 +217,11 @@ export default function RadarIndexPage() {
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600">
                         {row.median_discount_pct.toFixed(1)}%
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-600 text-xs">
+                        {row.market_price_per_sqm
+                          ? `R$ ${row.market_price_per_sqm.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`
+                          : <span className="text-gray-400">—</span>}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <TrendArrow delta={row.trend_delta} />
