@@ -14,33 +14,37 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "market_prices",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("city", sa.String(100), nullable=False),
-        sa.Column("uf", sa.String(2), nullable=False),
-        sa.Column("property_type", sa.String(50)),
-        sa.Column("price_per_sqm_sale", sa.Numeric(12, 2)),
-        sa.Column("price_per_sqm_rent", sa.Numeric(12, 2)),
-        sa.Column("reference_month", sa.Date(), nullable=False),
-        sa.Column("source", sa.String(50), server_default="fipezap"),
-        sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()")),
-        sa.UniqueConstraint(
-            "city", "uf", "property_type", "reference_month", "source",
-            name="uq_market_prices",
-        ),
-    )
+    # CREATE TABLE IF NOT EXISTS — idempotente (tabela pode já existir por
+    # comandos ad-hoc anteriores à migration formal)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS market_prices (
+            id                 SERIAL PRIMARY KEY,
+            city               VARCHAR(100) NOT NULL,
+            uf                 VARCHAR(2)   NOT NULL,
+            property_type      VARCHAR(50),
+            price_per_sqm_sale NUMERIC(12, 2),
+            price_per_sqm_rent NUMERIC(12, 2),
+            reference_month    DATE         NOT NULL,
+            source             VARCHAR(50)  NOT NULL DEFAULT 'fipezap',
+            created_at         TIMESTAMP    DEFAULT now(),
+            CONSTRAINT uq_market_prices UNIQUE (city, uf, property_type, reference_month, source)
+        )
+    """)
 
-    op.add_column("properties", sa.Column("source_type", sa.String(20), server_default="bank"))
-    op.add_column("properties", sa.Column("auction_stage", sa.String(30)))
-    op.add_column("properties", sa.Column("auctioneer_name", sa.String(100)))
-    op.add_column("properties", sa.Column("process_number", sa.String(50)))
-    op.add_column("properties", sa.Column("market_price_per_sqm", sa.Numeric(12, 2)))
-    op.add_column("properties", sa.Column("discount_vs_market_pct", sa.Numeric(5, 2)))
+    # ADD COLUMN IF NOT EXISTS — idempotente
+    for col_ddl in [
+        "ALTER TABLE properties ADD COLUMN IF NOT EXISTS source_type         VARCHAR(20) DEFAULT 'bank'",
+        "ALTER TABLE properties ADD COLUMN IF NOT EXISTS auction_stage        VARCHAR(30)",
+        "ALTER TABLE properties ADD COLUMN IF NOT EXISTS auctioneer_name      VARCHAR(100)",
+        "ALTER TABLE properties ADD COLUMN IF NOT EXISTS process_number       VARCHAR(50)",
+        "ALTER TABLE properties ADD COLUMN IF NOT EXISTS market_price_per_sqm NUMERIC(12,2)",
+        "ALTER TABLE properties ADD COLUMN IF NOT EXISTS discount_vs_market_pct NUMERIC(5,2)",
+    ]:
+        op.execute(col_ddl)
 
-    op.create_index("ix_properties_auction_stage", "properties", ["auction_stage"])
-    op.create_index("ix_properties_source_type", "properties", ["source_type"])
-    op.create_index("ix_properties_process_number", "properties", ["process_number"])
+    op.execute("CREATE INDEX IF NOT EXISTS ix_properties_auction_stage ON properties (auction_stage)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_properties_source_type   ON properties (source_type)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_properties_process_number ON properties (process_number)")
 
     op.execute("""
         INSERT INTO banks (code, name, active, source_type, tos_compliant) VALUES
@@ -54,13 +58,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_properties_process_number")
-    op.drop_index("ix_properties_source_type")
-    op.drop_index("ix_properties_auction_stage")
-    op.drop_column("properties", "discount_vs_market_pct")
-    op.drop_column("properties", "market_price_per_sqm")
-    op.drop_column("properties", "process_number")
-    op.drop_column("properties", "auctioneer_name")
-    op.drop_column("properties", "auction_stage")
-    op.drop_column("properties", "source_type")
-    op.drop_table("market_prices")
+    op.execute("DROP INDEX IF EXISTS ix_properties_process_number")
+    op.execute("DROP INDEX IF EXISTS ix_properties_source_type")
+    op.execute("DROP INDEX IF EXISTS ix_properties_auction_stage")
+    op.execute("ALTER TABLE properties DROP COLUMN IF EXISTS discount_vs_market_pct")
+    op.execute("ALTER TABLE properties DROP COLUMN IF EXISTS market_price_per_sqm")
+    op.execute("ALTER TABLE properties DROP COLUMN IF EXISTS process_number")
+    op.execute("ALTER TABLE properties DROP COLUMN IF EXISTS auctioneer_name")
+    op.execute("ALTER TABLE properties DROP COLUMN IF EXISTS auction_stage")
+    op.execute("ALTER TABLE properties DROP COLUMN IF EXISTS source_type")
+    op.execute("DROP TABLE IF EXISTS market_prices")
