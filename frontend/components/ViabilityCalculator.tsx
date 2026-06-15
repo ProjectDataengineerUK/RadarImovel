@@ -65,7 +65,7 @@ export function ViabilityCalculator({ propertyId }: Props) {
   }
 
   return (
-    <div className="mt-4 border rounded-lg p-4 bg-gray-50">
+    <div className="mt-4 border rounded-lg p-4 bg-white text-gray-900">
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold text-gray-700">Calculadora de Viabilidade</h3>
         <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
@@ -79,13 +79,13 @@ export function ViabilityCalculator({ propertyId }: Props) {
           { key: "hold_years", label: "Horizonte (anos)", placeholder: "5" },
         ].map(({ key, label, placeholder }) => (
           <div key={key}>
-            <label className="text-xs text-gray-500 block mb-1">{label}</label>
+            <label className="text-xs text-gray-600 block mb-1">{label}</label>
             <input
               type="number"
               value={form[key as keyof typeof form]}
               onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
               placeholder={placeholder}
-              className="w-full border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="w-full border rounded px-2 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </div>
         ))}

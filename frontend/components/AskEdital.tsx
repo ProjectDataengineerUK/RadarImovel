@@ -14,7 +14,7 @@ interface AskResult {
   not_found: boolean;
 }
 
-export function AskEdital({ propertyId }: { propertyId: string }) {
+export function AskEdital({ propertyId, editalProcessed = true }: { propertyId: string; editalProcessed?: boolean }) {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<AskResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,6 +44,21 @@ export function AskEdital({ propertyId }: { propertyId: string }) {
     }
   }
 
+  if (!editalProcessed) {
+    return (
+      <div className="bg-white border rounded-xl p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">💬</span>
+          <h3 className="font-semibold text-gray-800">Pergunte ao edital</h3>
+        </div>
+        <p className="text-sm text-gray-500">
+          O edital deste imóvel ainda não foi processado pela IA. Assim que disponível, você poderá
+          fazer perguntas diretamente sobre o documento.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white border rounded-xl p-4 space-y-3">
       <div className="flex items-center gap-2">
@@ -57,7 +72,7 @@ export function AskEdital({ propertyId }: { propertyId: string }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Ex: Quem paga dívidas de condomínio?"
-          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 border rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={loading}
         />
         <button

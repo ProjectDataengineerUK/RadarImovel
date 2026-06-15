@@ -32,7 +32,8 @@ export default function PropertyDetailPage() {
   const { property: p, changes, edital_processed, edital } = data;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8">
+    <div className="p-6 max-w-4xl mx-auto">
+    <div className="bg-white rounded-2xl shadow-sm p-8 space-y-8">
       <div className="flex items-start justify-between">
         <div>
           <Link href="/imoveis" className="text-sm text-blue-600 hover:underline">← Voltar</Link>
@@ -109,13 +110,15 @@ export default function PropertyDetailPage() {
 
       {hasFeature("calculator") && <ViabilityCalculator propertyId={id} />}
 
-      <div className="rounded-xl border p-6">
-        <MatriculaSection matricula={matricula ?? null} />
-      </div>
+      {matricula && (
+        <div className="rounded-xl border p-6">
+          <MatriculaSection matricula={matricula} />
+        </div>
+      )}
 
       {hasFeature("price_forecast") && <PriceDropForecast propertyId={id} />}
 
-      {edital_processed && hasFeature("ask") && <AskEdital propertyId={id} />}
+      {hasFeature("ask") && <AskEdital propertyId={id} editalProcessed={edital_processed} />}
 
       {riskScore && (
         <div className="space-y-4 rounded-xl border p-6">
@@ -158,6 +161,7 @@ export default function PropertyDetailPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
