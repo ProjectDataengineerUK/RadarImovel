@@ -61,6 +61,12 @@ def _serialize_property(p: Property) -> dict:
         "status": p.status,
         "first_seen_at": p.first_seen_at.isoformat() if p.first_seen_at else None,
         "last_seen_at": p.last_seen_at.isoformat() if p.last_seen_at else None,
+        # Fase 5
+        "source_type": getattr(p, "source_type", "bank"),
+        "auction_stage": getattr(p, "auction_stage", None),
+        "process_number": getattr(p, "process_number", None),
+        "market_price_per_sqm": float(p.market_price_per_sqm) if getattr(p, "market_price_per_sqm", None) else None,
+        "discount_vs_market_pct": float(p.discount_vs_market_pct) if getattr(p, "discount_vs_market_pct", None) else None,
     }
 
 

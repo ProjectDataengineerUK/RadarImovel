@@ -63,6 +63,14 @@ function MapaContent() {
           ))}
         </div>
 
+        <div className="pt-2 border-t">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">2ª Praça</p>
+          <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 rounded px-2 py-1.5 border border-red-200">
+            <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            Deságio ≥40% — oportunidade P0
+          </div>
+        </div>
+
         {data && (
           <p className="text-xs text-gray-400">
             {data.features.length} municípios com dados
