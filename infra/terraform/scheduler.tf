@@ -266,3 +266,54 @@ resource "google_cloud_scheduler_job" "collect_source" {
     }
   }
 }
+
+# ── Fase 5: judicial — 3 tribunais principais, 1x/dia às 06h UTC ─────────────
+locals {
+  tribunais = ["TRT2", "TRT15", "TJSP"]
+}
+
+resource "google_cloud_scheduler_job" "collect_judicial" {
+  for_each = toset(local.tribunais)
+
+  name             = "collect-judicial-${lower(each.key)}-daily"
+  schedule         = "0 6 * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "3600s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-collect-judicial:run"
+    body = base64encode(jsonencode({
+      overrides = {
+        containerOverrides = [{
+          env = [
+            { name = "TRIBUNAL", value = each.key },
+            { name = "DAYS_BACK", value = "30" },
+          ]
+        }]
+      }
+    }))
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}
+
+# ── Fase 5: preços de mercado FipeZap — 1x/mês dia 2 às 05h UTC ─────────────
+resource "google_cloud_scheduler_job" "collect_market_prices" {
+  name             = "collect-market-prices-monthly"
+  schedule         = "0 5 2 * *"
+  time_zone        = "UTC"
+  attempt_deadline = "600s"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.jobs_api_base}/radar-collect-market-prices:run"
+    body        = base64encode("{}")
+
+    oauth_token {
+      service_account_email = google_service_account.scheduler_sa.email
+    }
+  }
+}

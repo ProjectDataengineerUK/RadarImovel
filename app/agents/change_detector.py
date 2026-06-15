@@ -1,5 +1,8 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import Session
+
+from app.agents.second_auction_detector import SecondAuctionDetector
 from app.models.property import Property, PropertyChange
 
 MONITORED_FIELDS = [
@@ -11,6 +14,8 @@ MONITORED_FIELDS = [
     "status",
     "auction_date",
 ]
+
+_second_auction_detector = SecondAuctionDetector()
 
 
 def detect_and_record_changes(
@@ -26,8 +31,18 @@ def detect_and_record_changes(
                 field_name=field,
                 old_value=str(old) if old is not None else None,
                 new_value=str(new) if new is not None else None,
-                detected_at=datetime.now(timezone.utc),
+                detected_at=datetime.now(UTC),
             )
             session.add(change)
             changes.append(change)
+
+            if field == "minimum_value" and old is not None and new is not None:
+                _second_auction_detector.detect(
+                    property_id=existing.id,
+                    old_minimum=old,
+                    new_minimum=new,
+                    old_stage=getattr(existing, "auction_stage", None),
+                    session=session,
+                )
+
     return changes

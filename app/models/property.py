@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, date
 from decimal import Decimal
-from sqlalchemy import String, Text, Numeric, SmallInteger, Date, ForeignKey, Index, Boolean
+from sqlalchemy import String, Text, Numeric, SmallInteger, Date, ForeignKey, Index, Boolean, Integer, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, new_uuid, utcnow
@@ -97,3 +97,22 @@ class PropertyChange(Base):
     detected_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
 
     property: Mapped["Property"] = relationship("Property", back_populates="changes")
+
+
+class MarketPrice(Base):
+    """Preços de mercado por cidade/tipo (fonte: FipeZap), atualizados mensalmente."""
+    __tablename__ = "market_prices"
+    __table_args__ = (
+        UniqueConstraint("city", "uf", "property_type", "reference_month", "source", name="uq_market_prices"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    city: Mapped[str] = mapped_column(String(100), nullable=False)
+    uf: Mapped[str] = mapped_column(String(2), nullable=False)
+    property_type: Mapped[str | None] = mapped_column(String(50))
+    price_per_sqm: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    price_per_sqm_sale: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    price_per_sqm_rent: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    reference_month: Mapped[date] = mapped_column(Date, nullable=False)
+    source: Mapped[str] = mapped_column(String(50), default="fipezap")
+    created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)

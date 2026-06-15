@@ -67,10 +67,56 @@
     <tr><td>Cidade/UF</td><td>{{ property.city }}/{{ property.state }}</td></tr>
     <tr><td>Tipo</td><td>{{ property.property_type }}</td></tr>
     <tr><td>Valor atual</td><td>R$ {{ "{:,.2f}".format(property.current_value) }}</td></tr>
-    <tr><td>Desconto</td><td>{{ property.discount_percent or "N/D" }}%</td></tr>
+    <tr><td>Desconto sobre avaliação</td><td>{{ property.discount_percent or "N/D" }}%</td></tr>
     <tr><td>Ocupação</td><td>{{ property.occupancy_status }}</td></tr>
     <tr><td>Modalidade</td><td>{{ property.sale_modality }}</td></tr>
+    {% if property.auction_stage %}<tr><td>Estágio do leilão</td><td>{{ property.auction_stage }}</td></tr>{% endif %}
+    {% if property.auctioneer_name %}<tr><td>Leiloeiro</td><td>{{ property.auctioneer_name }}</td></tr>{% endif %}
+    {% if property.process_number %}<tr><td>Número do processo</td><td>{{ property.process_number }}</td></tr>{% endif %}
   </table>
+
+  {% if property.market_price_per_sqm or property.discount_vs_market_pct %}
+  <h2>Inteligência de Mercado (FipeZap)</h2>
+  <table>
+    <tr><th>Campo</th><th>Valor</th></tr>
+    {% if property.market_price_per_sqm %}
+    <tr>
+      <td>Preço de mercado/m² (FipeZap)</td>
+      <td>R$ {{ "{:,.2f}".format(property.market_price_per_sqm) }}/m²</td>
+    </tr>
+    {% if property.area_sqm %}
+    <tr>
+      <td>Valor de mercado estimado ({{ property.area_sqm }}m²)</td>
+      <td>R$ {{ "{:,.2f}".format(property.market_price_per_sqm * property.area_sqm) }}</td>
+    </tr>
+    {% endif %}
+    {% endif %}
+    {% if property.discount_vs_market_pct %}
+    <tr>
+      <td>Deságio vs. mercado FipeZap</td>
+      <td><strong>{{ "{:.1f}".format(property.discount_vs_market_pct) }}%</strong> abaixo do preço de mercado</td>
+    </tr>
+    {% endif %}
+  </table>
+  <p style="font-size:9pt;color:#6b7280;margin-top:4pt;">
+    Fonte: FipeZap — índice mensal de preço/m² por cidade. Referência para avaliação de oportunidade, não substitui laudo de avaliação profissional.
+  </p>
+  {% endif %}
+
+  {% if property.edital_summary %}
+  <h2>Extrato do Edital (IA)</h2>
+  <table>
+    <tr><th>Campo</th><th>Valor</th></tr>
+    {% if property.edital_summary.auction_date %}<tr><td>Data do leilão</td><td>{{ property.edital_summary.auction_date }}</td></tr>{% endif %}
+    {% if property.edital_summary.minimum_bid %}<tr><td>Lance mínimo</td><td>R$ {{ "{:,.2f}".format(property.edital_summary.minimum_bid) }}</td></tr>{% endif %}
+    {% if property.edital_summary.auctioneer %}<tr><td>Leiloeiro</td><td>{{ property.edital_summary.auctioneer }}</td></tr>{% endif %}
+    {% if property.edital_summary.debts %}<tr><td>Dívidas informadas</td><td>{{ property.edital_summary.debts | join(", ") }}</td></tr>{% endif %}
+    {% if property.edital_summary.observations %}<tr><td>Observações</td><td>{{ property.edital_summary.observations }}</td></tr>{% endif %}
+  </table>
+  <p style="font-size:9pt;color:#6b7280;margin-top:4pt;">
+    Extrato gerado por IA (Gemini) — verifique o edital original antes de licitar.
+  </p>
+  {% endif %}
 
   <h2>Indicadores Auditáveis</h2>
   {% if risk.indicators %}

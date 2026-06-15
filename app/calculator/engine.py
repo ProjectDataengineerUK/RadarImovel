@@ -6,8 +6,6 @@ com venda futura. Custos (ITBI, registro, escritura) são lidos da tabela
 """
 from __future__ import annotations
 
-import math
-import os
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path

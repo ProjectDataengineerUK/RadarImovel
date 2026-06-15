@@ -120,6 +120,29 @@ resource "google_pubsub_subscription" "matricula_events_sub" {
   }
 }
 
+# ── Fase 5: subscription dedicada para alertas de 2ª Praça (alta prioridade) ─
+
+resource "google_pubsub_subscription" "segunda_praca_sub" {
+  name  = "segunda-praca-sub"
+  topic = google_pubsub_topic.property_events.name
+
+  # Filtra somente eventos segunda_praca — processados pelo alert_agent
+  filter = "attributes.event_type = \"segunda_praca\""
+
+  ack_deadline_seconds       = 30  # SLA curto — investidores competem por 2ª praça
+  message_retention_duration = "43200s"  # 12h — evento é urgente, não acumular
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.property_events_dlq.id
+    max_delivery_attempts = 3
+  }
+
+  retry_policy {
+    minimum_backoff = "5s"
+    maximum_backoff = "60s"
+  }
+}
+
 resource "google_pubsub_subscription" "edital_events_sub" {
   name  = "edital-events-sub"
   topic = google_pubsub_topic.edital_events.name

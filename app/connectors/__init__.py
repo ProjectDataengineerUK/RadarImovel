@@ -8,8 +8,12 @@ from app.connectors.brb import BRBConnector
 from app.connectors.caixa import CaixaConnector
 from app.connectors.fidalgo.collector import FidalgoConnector
 from app.connectors.frazao.collector import FrazaoConnector
+from app.connectors.judicial import JudicialConnector
+from app.connectors.lance_certo.collector import LanceCertoConnector
 from app.connectors.mega.collector import MegaConnector
 from app.connectors.sodre.collector import SodreConnector
+from app.connectors.superleiloes.collector import SuperleiloesConnector
+from app.connectors.tjsp import TJSPConnector
 from app.connectors.zuk.collector import ZukConnector
 
 CONNECTOR_REGISTRY: dict[str, type[BankConnector]] = {
@@ -22,7 +26,7 @@ CONNECTOR_REGISTRY: dict[str, type[BankConnector]] = {
     "banestes": BanestesConnector,
 }
 
-# SOURCE_REGISTRY: bancos + leiloeiros (tos_compliant=False bloqueados por padrão no job)
+# SOURCE_REGISTRY: bancos + leiloeiros + judicial (tos_compliant=False bloqueados por padrão no job)
 SOURCE_REGISTRY: dict[str, type[SourceConnector]] = {
     **CONNECTOR_REGISTRY,
     "zuk": ZukConnector,
@@ -30,6 +34,10 @@ SOURCE_REGISTRY: dict[str, type[SourceConnector]] = {
     "sodre": SodreConnector,
     "fidalgo": FidalgoConnector,
     "frazao": FrazaoConnector,
+    "lance_certo": LanceCertoConnector,
+    "superleiloes": SuperleiloesConnector,
+    "judicial": JudicialConnector,
+    "tjsp": TJSPConnector,
 }
 
 

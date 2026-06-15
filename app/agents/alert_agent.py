@@ -1,14 +1,20 @@
 import asyncio
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import Session
-from app.core.database import SessionLocal
+
 from app.core.config import get_settings
+from app.core.database import SessionLocal
 from app.core.logging import logger
 from app.models.property import Property
-from app.models.user import User, Watchlist, Alert
+from app.models.user import Alert, User, Watchlist
 from app.services.notification import build_channels
-from app.services.telegram import format_property_alert, format_risk_change_alert
+from app.services.telegram import (
+    format_property_alert,
+    format_risk_change_alert,
+    format_segunda_praca_alert,
+)
 
 settings = get_settings()
 
@@ -47,10 +53,10 @@ def match_watchlists(session: Session, property_id: str) -> list[tuple[User, Wat
 def _latency_minutes(prop: Property) -> int | None:
     if not prop.first_seen_at:
         return None
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     first = prop.first_seen_at
     if first.tzinfo is None:
-        first = first.replace(tzinfo=timezone.utc)
+        first = first.replace(tzinfo=UTC)
     return max(0, int((now - first).total_seconds() / 60))
 
 
@@ -88,16 +94,21 @@ async def _send_to_user(user: User, prop: Property, watchlist: Watchlist, sessio
             channel=channel_name,
             status="success" if success else "failed",
             message=message,
-            sent_at=datetime.now(timezone.utc) if success else None,
+            sent_at=datetime.now(UTC) if success else None,
         )
         session.add(alert)
 
 
 async def process_property_event(event: dict) -> None:
     property_id = event.get("property_id")
+    event_type = event.get("event_type", "new")
 
     if not property_id:
         logger.warning("alert_agent.missing_property_id", event=event)
+        return
+
+    if event_type == "segunda_praca":
+        await process_segunda_praca_event(event)
         return
 
     with SessionLocal() as session:
@@ -109,6 +120,41 @@ async def process_property_event(event: dict) -> None:
 
         session.commit()
         logger.info("alert_agent.processed", property_id=property_id, matches=len(matches))
+
+
+async def process_segunda_praca_event(event: dict) -> None:
+    property_id = event.get("property_id")
+    if not property_id:
+        return
+
+    with SessionLocal() as session:
+        prop = session.query(Property).filter_by(id=uuid.UUID(property_id)).first()
+        if not prop:
+            logger.warning("alert_agent.segunda_praca.missing_property", property_id=property_id)
+            return
+
+        matches = match_watchlists(session, property_id)
+        message = format_segunda_praca_alert({
+            "city": prop.city,
+            "state": prop.state,
+            "old_value": event.get("old_minimum"),
+            "new_value": event.get("new_minimum"),
+            "drop_pct": event.get("drop_pct"),
+            "auction_stage": "2ª Praça",
+            "opportunity_score": prop.opportunity_score,
+            "official_url": prop.official_url,
+        })
+
+        for user, watchlist in matches:
+            await _send_message_to_user(user, prop, watchlist, message, session)
+
+        session.commit()
+        logger.info(
+            "alert_agent.segunda_praca.processed",
+            property_id=property_id,
+            drop_pct=event.get("drop_pct"),
+            matches=len(matches),
+        )
 
 
 async def _send_message_to_user(
@@ -137,7 +183,7 @@ async def _send_message_to_user(
             channel=channel_name,
             status="success" if success else "failed",
             message=message,
-            sent_at=datetime.now(timezone.utc) if success else None,
+            sent_at=datetime.now(UTC) if success else None,
         )
         session.add(alert)
 

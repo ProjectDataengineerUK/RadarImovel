@@ -1,4 +1,5 @@
 import httpx
+
 from app.core.config import get_settings
 from app.core.logging import logger
 
@@ -50,6 +51,29 @@ def format_property_alert(prop: dict) -> str:
         f"📋 {modality} | {occupancy}\n"
         f"⭐ Score: {score}/100\n\n"
         f"🔗 <a href='{url}'>Ver imóvel na Caixa</a>"
+    )
+
+
+def format_segunda_praca_alert(prop: dict) -> str:
+    city = prop.get("city", "")
+    state = prop.get("state", "")
+    old_val = prop.get("old_value")
+    new_val = prop.get("new_value")
+    drop_pct = prop.get("drop_pct")
+    score = prop.get("opportunity_score", "—")
+    url = prop.get("official_url", "")
+
+    old_fmt = f"R$ {float(old_val):,.0f}".replace(",", ".") if old_val else "—"
+    new_fmt = f"R$ {float(new_val):,.0f}".replace(",", ".") if new_val else "—"
+    drop_fmt = f"{drop_pct:.1f}%" if drop_pct is not None else "—"
+
+    return (
+        f"🔥 <b>2ª Praça detectada — Radar Imóvel</b>\n\n"
+        f"📍 {city}/{state}\n"
+        f"💰 Lance mínimo: {old_fmt} → {new_fmt} (-{drop_fmt})\n"
+        f"⭐ Score de oportunidade: {score}/100\n\n"
+        f"⚡ Imóvel em 2ª praça pode ser arrematado com desconto maior!\n"
+        f"🔗 <a href='{url}'>Ver imóvel</a>"
     )
 
 

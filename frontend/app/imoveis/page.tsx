@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useProperties } from "@/hooks/useProperties";
 import { formatCurrency } from "@/lib/utils";
 import ScoreBadge from "@/components/ScoreBadge";
+import { SecondAuctionBadge } from "@/components/SecondAuctionBadge";
+import { MarketComparisonBadge } from "@/components/MarketComparisonBadge";
 import type { PropertyFilters as Filters } from "@/lib/types";
 import { BANK_DISPLAY, BANK_OPTIONS } from "@/lib/banks";
 
@@ -179,6 +181,12 @@ export default function ImoveisPage() {
                           {p.city}, {p.state}
                         </Link>
                         {p.neighborhood && <p className="text-xs text-gray-500 mt-0.5">{p.neighborhood}</p>}
+                        <div className="flex gap-1 mt-1">
+                          {p.auction_stage === "segunda_praca" && <SecondAuctionBadge />}
+                          {p.discount_vs_market_pct != null && (
+                            <MarketComparisonBadge discountVsMarketPct={p.discount_vs_market_pct} />
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3.5">
                         {p.bank_code ? (() => {

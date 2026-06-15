@@ -334,6 +334,57 @@ resource "google_cloud_run_v2_job" "collect_source" {
   depends_on = [google_project_service.apis]
 }
 
+# ── Fase 5: judicial e preços de mercado ────────────────────────────────────────
+resource "google_cloud_run_v2_job" "collect_judicial" {
+  name     = "radar-collect-judicial"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "3600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.collect_judicial"]
+        env {
+          name  = "TRIBUNAL"
+          value = "TRT2"
+        }
+        env {
+          name  = "DAYS_BACK"
+          value = "30"
+        }
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_cloud_run_v2_job" "collect_market_prices" {
+  name     = "radar-collect-market-prices"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.job_sa.email
+      max_retries     = 1
+      timeout         = "600s"
+      containers {
+        image   = local.placeholder
+        command = ["python", "-m", "jobs.collect_market_prices"]
+      }
+    }
+  }
+
+  lifecycle { ignore_changes = [template] }
+
+  depends_on = [google_project_service.apis]
+}
+
 # Allow unauthenticated access (Firebase JWT validated by FastAPI middleware)
 resource "google_cloud_run_v2_service_iam_member" "api_public" {
   project  = var.project_id

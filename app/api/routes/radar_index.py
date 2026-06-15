@@ -1,8 +1,9 @@
-"""GET /radar-index — Índice público de deságio por estado/banco (sem autenticação)."""
-from typing import Any
+"""GET /radar-index — Índice público de deságio por estado/banco/município."""
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -28,12 +29,37 @@ class RadarIndexResponse(BaseModel):
     entries: list[RadarIndexEntry]
 
 
+class CityIndexEntry(BaseModel):
+    city: str
+    uf: str
+    sample_size: int
+    avg_discount_pct: float
+    median_discount_pct: float
+    trend_delta: float | None
+
+
+class CityIndexResponse(BaseModel):
+    entries: list[CityIndexEntry]
+
+
+class HotspotEntry(BaseModel):
+    city: str
+    uf: str
+    sample_size: int
+    avg_discount_pct: float
+    trend_delta: float | None
+
+
 @router.get("", response_model=RadarIndexResponse)
 def get_radar_index(
     period: str | None = Query(None, description="Período YYYY-MM; padrão = mais recente"),
     state: str | None = Query(None, description="Filtro por UF (ex: SP)"),
+    granularity: Literal["state", "city"] = Query("state", description="Agregação por estado ou município"),
     db: Session = Depends(get_db),
 ) -> Any:
+    if granularity == "city":
+        return _get_city_index(state, db)
+
     q = db.query(RadarIndex)
 
     if period:
@@ -72,3 +98,101 @@ def get_radar_index(
             for r in rows
         ],
     )
+
+
+def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
+    """Agrega deságio por município nos últimos 2 meses, com tendência."""
+    sql = text("""
+        WITH monthly AS (
+            SELECT
+                city,
+                state AS uf,
+                DATE_TRUNC('month', collected_at) AS period,
+                COUNT(*) AS sample_size,
+                AVG(discount_percent) AS avg_discount_pct,
+                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY discount_percent) AS median_discount_pct
+            FROM properties
+            WHERE
+                discount_percent IS NOT NULL
+                AND collected_at >= NOW() - INTERVAL '2 months'
+                AND city IS NOT NULL
+                AND (:uf IS NULL OR state = :uf)
+            GROUP BY city, state, DATE_TRUNC('month', collected_at)
+        ),
+        with_trend AS (
+            SELECT
+                city,
+                uf,
+                period,
+                sample_size,
+                avg_discount_pct,
+                median_discount_pct,
+                avg_discount_pct - LAG(avg_discount_pct) OVER (
+                    PARTITION BY city, uf ORDER BY period
+                ) AS trend_delta
+            FROM monthly
+        )
+        SELECT city, uf, SUM(sample_size) AS sample_size,
+               AVG(avg_discount_pct) AS avg_discount_pct,
+               AVG(median_discount_pct) AS median_discount_pct,
+               MAX(trend_delta) AS trend_delta
+        FROM with_trend
+        WHERE period = (SELECT MAX(period) FROM monthly)
+        GROUP BY city, uf
+        ORDER BY avg_discount_pct DESC
+        LIMIT 200
+    """)
+    rows = db.execute(sql, {"uf": state.upper() if state else None}).fetchall()
+    return CityIndexResponse(
+        entries=[
+            CityIndexEntry(
+                city=r.city,
+                uf=r.uf,
+                sample_size=r.sample_size,
+                avg_discount_pct=float(r.avg_discount_pct),
+                median_discount_pct=float(r.median_discount_pct),
+                trend_delta=float(r.trend_delta) if r.trend_delta is not None else None,
+            )
+            for r in rows
+        ]
+    )
+
+
+@router.get("/hotspots", response_model=list[HotspotEntry])
+def get_hotspots(
+    min_sample: int = Query(5, description="Mínimo de imóveis no período"),
+    limit: int = Query(10, description="Top N municípios"),
+    db: Session = Depends(get_db),
+) -> Any:
+    """Top municípios com maior deságio médio nos últimos 30 dias (mín. sample_size imóveis)."""
+    sql = text("""
+        SELECT
+            city,
+            state AS uf,
+            COUNT(*) AS sample_size,
+            AVG(discount_percent) AS avg_discount_pct,
+            AVG(discount_percent) - LAG(AVG(discount_percent)) OVER (
+                PARTITION BY city, state
+                ORDER BY DATE_TRUNC('month', collected_at)
+            ) AS trend_delta
+        FROM properties
+        WHERE
+            discount_percent IS NOT NULL
+            AND collected_at >= NOW() - INTERVAL '30 days'
+            AND city IS NOT NULL
+        GROUP BY city, state, DATE_TRUNC('month', collected_at)
+        HAVING COUNT(*) >= :min_sample
+        ORDER BY avg_discount_pct DESC
+        LIMIT :limit
+    """)
+    rows = db.execute(sql, {"min_sample": min_sample, "limit": limit}).fetchall()
+    return [
+        HotspotEntry(
+            city=r.city,
+            uf=r.uf,
+            sample_size=r.sample_size,
+            avg_discount_pct=float(r.avg_discount_pct),
+            trend_delta=float(r.trend_delta) if r.trend_delta is not None else None,
+        )
+        for r in rows
+    ]

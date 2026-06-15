@@ -10,8 +10,12 @@ from app.connectors.brb import BRBConnector
 from app.connectors.caixa import CaixaConnector
 from app.connectors.fidalgo.collector import FidalgoConnector
 from app.connectors.frazao.collector import FrazaoConnector
+from app.connectors.judicial import JudicialConnector
+from app.connectors.lance_certo.collector import LanceCertoConnector
 from app.connectors.mega.collector import MegaConnector
 from app.connectors.sodre.collector import SodreConnector
+from app.connectors.superleiloes.collector import SuperleiloesConnector
+from app.connectors.tjsp import TJSPConnector
 from app.connectors.zuk.collector import ZukConnector
 
 EXPECTED_BANKS = {
@@ -31,6 +35,10 @@ EXPECTED_SOURCES = {
     "sodre": SodreConnector,
     "fidalgo": FidalgoConnector,
     "frazao": FrazaoConnector,
+    "lance_certo": LanceCertoConnector,
+    "superleiloes": SuperleiloesConnector,
+    "judicial": JudicialConnector,
+    "tjsp": TJSPConnector,
 }
 
 
@@ -38,7 +46,7 @@ def test_registry_has_seven_banks():
     assert set(CONNECTOR_REGISTRY) == set(EXPECTED_BANKS)
 
 
-def test_source_registry_has_twelve_sources():
+def test_source_registry_has_sixteen_sources():
     assert set(SOURCE_REGISTRY) == set(EXPECTED_SOURCES)
 
 
