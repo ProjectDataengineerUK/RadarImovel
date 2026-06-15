@@ -108,17 +108,17 @@ def _get_city_index(state: str | None, db: Session) -> CityIndexResponse:
             SELECT
                 city,
                 state AS uf,
-                DATE_TRUNC('month', collected_at) AS period,
+                DATE_TRUNC('month', first_seen_at) AS period,
                 COUNT(*) AS sample_size,
                 AVG(discount_percent) AS avg_discount_pct,
                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY discount_percent) AS median_discount_pct
             FROM properties
             WHERE
                 discount_percent IS NOT NULL
-                AND collected_at >= NOW() - INTERVAL '2 months'
+                AND first_seen_at >= NOW() - INTERVAL '2 months'
                 AND city IS NOT NULL
                 AND (:uf IS NULL OR state = :uf)
-            GROUP BY city, state, DATE_TRUNC('month', collected_at)
+            GROUP BY city, state, DATE_TRUNC('month', first_seen_at)
         ),
         with_trend AS (
             SELECT
@@ -189,14 +189,14 @@ def get_hotspots(
             AVG(discount_percent) AS avg_discount_pct,
             AVG(discount_percent) - LAG(AVG(discount_percent)) OVER (
                 PARTITION BY city, state
-                ORDER BY DATE_TRUNC('month', collected_at)
+                ORDER BY DATE_TRUNC('month', first_seen_at)
             ) AS trend_delta
         FROM properties
         WHERE
             discount_percent IS NOT NULL
-            AND collected_at >= NOW() - INTERVAL '30 days'
+            AND first_seen_at >= NOW() - INTERVAL '30 days'
             AND city IS NOT NULL
-        GROUP BY city, state, DATE_TRUNC('month', collected_at)
+        GROUP BY city, state, DATE_TRUNC('month', first_seen_at)
         HAVING COUNT(*) >= :min_sample
         ORDER BY avg_discount_pct DESC
         LIMIT :limit
