@@ -99,7 +99,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-blue-500 text-xl font-bold">⚖</span>
-            <span className="text-white font-bold text-lg tracking-tight">Hastavista</span>
+            <span className="text-white font-bold text-lg tracking-tight">Mastavista</span>
           </div>
 
           <div className="hidden md:flex items-center gap-6 text-sm text-gray-400">
@@ -379,7 +379,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-blue-500 font-bold">⚖</span>
-            <span className="font-semibold text-white">Hastavista</span>
+            <span className="font-semibold text-white">Mastavista</span>
             <span className="text-xs text-gray-600 ml-2">© 2026</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-600">
