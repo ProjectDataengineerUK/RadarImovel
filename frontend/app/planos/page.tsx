@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import api from "@/lib/api";
@@ -42,7 +42,7 @@ const FEATURE_ICONS: Record<string, string> = {
   api_access: "🔌",
 };
 
-export default function PlanosPage() {
+function PlanosContent() {
   const searchParams = useSearchParams();
   const checkoutStatus = searchParams.get("checkout");
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
@@ -221,5 +221,13 @@ export default function PlanosPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PlanosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-950 flex items-center justify-center"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>}>
+      <PlanosContent />
+    </Suspense>
   );
 }
