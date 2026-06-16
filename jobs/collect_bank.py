@@ -197,6 +197,10 @@ def run(bank: str, uf: str | None = None, fetch_detail: bool = True) -> None:
         if stats["collected"] == 0:
             log.warning("job.zero_properties", bank=bank, scope=scope)
 
+        if not dry_run:
+            bank_row.last_scraped_at = datetime.now(UTC)
+            session.commit()
+
     log.info("job.done", bank=bank, scope=scope, **stats)
 
 
@@ -273,6 +277,10 @@ def run_connector(connector, session, bank_code: str = "judicial") -> int:
                 session.commit()
         except Exception as exc:
             log.error("job.source_error", bank=bank_code, source_url=source_url, error=str(exc))
+
+    if not dry_run and bank_row:
+        bank_row.last_scraped_at = datetime.now(UTC)
+        session.commit()
 
     return total
 

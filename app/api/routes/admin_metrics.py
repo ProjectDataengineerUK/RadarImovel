@@ -41,19 +41,20 @@ def get_metrics(
         .scalar()
     )
 
-    # Saúde dos coletores — todas as 16 fontes ativas (bancos + leiloeiros + judicial)
+    # Saúde dos coletores — todas as fontes ativas (bancos + leiloeiros + judicial)
+    # last_scraped_at: quando o job rodou pela última vez (independente de achar imóveis)
     connector_health = db.execute(text("""
         SELECT
             b.code,
             b.name,
             b.source_type,
             b.tos_compliant,
-            MAX(p.last_seen_at)       AS last_seen,
+            b.last_scraped_at         AS last_seen,
             COUNT(p.id)               AS property_count
         FROM banks b
         LEFT JOIN properties p ON p.bank_id = b.id
         WHERE b.active = true
-        GROUP BY b.code, b.name, b.source_type, b.tos_compliant
+        GROUP BY b.code, b.name, b.source_type, b.tos_compliant, b.last_scraped_at
         ORDER BY b.source_type, b.name
     """)).fetchall()
 

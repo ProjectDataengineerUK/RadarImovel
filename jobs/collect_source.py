@@ -140,6 +140,10 @@ def run(source_code: str, uf: str | None = None) -> None:
         if stats["collected"] == 0:
             log.warning("job.zero_properties", source=source_code, scope=scope)
 
+        if not dry_run:
+            source_row.last_scraped_at = datetime.now(UTC)
+            session.commit()
+
     log.info("job.done", source=source_code, scope=scope, **stats)
 
 

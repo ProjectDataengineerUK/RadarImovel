@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import api from "@/lib/api";
 import { PLAN_DISPLAY } from "@/lib/entitlements";
 import { formatDate } from "@/lib/utils";
@@ -55,11 +56,20 @@ export default function UsuariosPage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <div className="border-b border-gray-800 px-8 py-5">
-        <h1 className="text-lg font-semibold text-white">Usuários</h1>
-        <p className="text-xs text-gray-500 mt-0.5">
-          {total} usuários registrados
-        </p>
+      <div className="border-b border-gray-800 px-8 py-5 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-white">Usuários</h1>
+          <p className="text-xs text-gray-500 mt-0.5">{total} usuários registrados</p>
+        </div>
+        <Link
+          href="/admin/usuarios/novo"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Novo usuário
+        </Link>
       </div>
 
       <div className="px-8 py-6 max-w-5xl">

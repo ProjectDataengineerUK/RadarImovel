@@ -17,6 +17,7 @@ class Bank(Base):
     # Onda 3: generalização bank → source (leiloeiros, tribunais)
     source_type: Mapped[str] = mapped_column(String(20), nullable=False, default="bank")
     tos_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    last_scraped_at: Mapped[datetime | None] = mapped_column(default=None, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
 
     sources: Mapped[list["Source"]] = relationship("Source", back_populates="bank")

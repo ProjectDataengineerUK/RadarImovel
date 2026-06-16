@@ -1,7 +1,8 @@
-# Radar Imóvel
+# Mastavista (ex-Radar Imóvel)
 
 > Plataforma de inteligência para monitorar leilões e vendas de imóveis de bancos públicos brasileiros (Caixa, Banco do Brasil, BRB, BNB, Banco da Amazônia, Banrisul, Banestes). O sistema coleta automaticamente os imóveis disponíveis, detecta mudanças de preço e status, calcula um score de oportunidade, lê editais com IA e envia alertas personalizados por Telegram/WhatsApp/e-mail.
 >
+> **Marca:** Mastavista · **Domínio:** mastavista.com.br (IP LB: 34.8.91.61, SSL provisionando)
 > **Status:** Fases 1–5 **shipped**. 16 fontes monitoradas (7 bancos + 5 leiloeiros + judicial + TJSP + Lance Certo + Superleilões), detector de 2ª Praça, comparação FipeZap, calculadora ROI, Radar Index por município. 339/339 testes passando. Repo: https://github.com/ProjectDataengineerUK/RadarImovel
 
 ---
@@ -23,9 +24,11 @@ Legenda: ✅ em uso · 🔭 planejado para fases futuras.
 - **Cache:** ✅ Redis / Memorystore (token de vínculo Telegram)
 - **Autenticação:** ✅ Firebase Auth (verificação de JWT via firebase-admin)
 - **Alertas:** ✅ Telegram Bot · 🔭 WhatsApp, SendGrid (e-mail) — camada de notificação já abstraída
+- **Pagamentos:** 🔭 Stripe (billing por assinatura — planos Free / Pro / Pro Anual)
 - **Segurança:** ✅ IAM + Secret Manager · 🔭 Cloud Armor
-- **Observabilidade:** ✅ Cloud Logging · 🔭 Cloud Monitoring
-- **CI/CD:** ✅ Cloud Build (`cloudbuild.yaml`) + Terraform (`infra/terraform/`)
+- **Observabilidade:** ✅ Cloud Logging + Sentinela (DataOps + LLMOps + MLOps dashboards) · 🔭 Cloud Monitoring
+- **CI/CD:** ✅ Cloud Build (`cloudbuild.yaml`) + GitHub Actions (`.github/workflows/deploy.yml`) + Terraform (`infra/terraform/`)
+- **Infraestrutura de domínio:** ✅ GCP Global HTTPS LB + Serverless NEG → Cloud Run frontend (`infra/terraform/lb_frontend.tf`)
 
 ## Estrutura atual
 
@@ -40,8 +43,8 @@ radar-imovel/
 │   └── api/              # main.py (FastAPI), middleware/auth.py, routes/ (properties, watchlists, users, alerts, admin, market, risk)
 ├── jobs/                 # collect_bank.py (genérico), collect_judicial.py, collect_market_prices.py, process_alerts, process_editais, enrich_details, calculate_risk, load_geodata
 ├── migrations/           # Alembic (env.py + versions/001_initial_schema.py)
-├── frontend/             # Next.js 14: app/ (login, dashboard, imoveis, alertas, configuracoes, admin), components/, hooks/, lib/
-├── infra/terraform/      # cloud_sql, cloud_run, pubsub, cloud_storage, scheduler, iam, secret_manager, variables, outputs, main
+├── frontend/             # Next.js 14: app/ (login, cadastro, dashboard, imoveis, alertas, configuracoes, admin, planos, privacidade, termos), components/ (LandingPage), hooks/, lib/
+├── infra/terraform/      # cloud_sql, cloud_run, pubsub, cloud_storage, scheduler, iam, secret_manager, lb_frontend, variables, outputs, main
 ├── tests/                # unit/ (parser, agentes) + integration/ (api, alert_agent) + conftest.py
 ├── Dockerfile.api / Dockerfile.job / cloudbuild.yaml
 ├── pyproject.toml        # deps Python (extras: api, job, dev, playwright) + ruff + pytest + mypy
@@ -53,7 +56,12 @@ radar-imovel/
 | Arquivo | Função |
 |---------|--------|
 | `context.md` | Especificação completa do produto: fontes, agentes, arquitetura GCP, banco de dados, dashboard e fluxos |
-| `.claude/sdd/features/` | Documentos SDD da Fase 5 (`BRAINSTORM_`, `DEFINE_`, `DESIGN_`); Fases 1–4 arquivadas em `.claude/sdd/archive/` |
+| `.claude/sdd/features/` | Vazio — pronto para próxima fase. Fases 1–5 arquivadas em `.claude/sdd/archive/` |
+| `infra/terraform/lb_frontend.tf` | Load Balancer GCP para mastavista.com.br → Cloud Run frontend (IP: 34.8.91.61) |
+| `frontend/components/LandingPage.tsx` | Landing page client component com hero, FAQ, mock de propriedade, nav mobile |
+| `frontend/app/cadastro/page.tsx` | Página de signup (Google OAuth + email/senha) |
+| `frontend/app/privacidade/page.tsx` | Política de Privacidade (LGPD) |
+| `frontend/app/termos/page.tsx` | Termos de Uso |
 | `app/connectors/base.py` | Interface abstrata `BankConnector` (discover_sources / fetch_raw / parse / normalize) — contrato para novos bancos |
 | `migrations/versions/001_initial_schema.py` | Schema completo: properties, property_changes, banks, sources, users, watchlists, alerts, documents |
 | `pyproject.toml` | Dependências e configuração de ferramentas (ruff, pytest, mypy) |
@@ -107,8 +115,16 @@ cd frontend && npm install && npm run dev     # dashboard em http://localhost:30
 - **Fase 3:** ✅ shipped (2026-06-08) — conectores para os 7 bancos via `CONNECTOR_REGISTRY` + job genérico `collect_bank` (94/94 testes)
 - **Fase 4:** ✅ shipped (2026-06-11) — Mapa de Risco multidimensional 0–100, ingestão de geodados públicos (`radar-load-geodata`)
 - **Fase 5:** ✅ shipped (2026-06-15) — 16 fontes (judicial DataJud, Lance Certo, Superleilões, TJSP), detector de 2ª Praça (queda ≥40%), comparação FipeZap, calculadora ROI, Radar Index por município; 339/339 testes
+- **Go-to-Market:** ✅ shipped (2026-06-16) — Rebranding para Mastavista, landing page completa, páginas de cadastro/privacidade/termos, Load Balancer GCP + domínio mastavista.com.br, Sentinela observabilidade (DataOps + LLMOps + MLOps)
 
 Relatórios de ship em `.claude/sdd/reports/` e features arquivadas em `.claude/sdd/archive/`.
+
+## Próximos passos sugeridos
+
+1. **DNS**: Adicionar registro A `@ → 34.8.91.61` e `www → 34.8.91.61` no registrar do domínio mastavista.com.br
+2. **Stripe**: Integrar billing (webhook + portal do cliente) para os planos Free / Pro / Pro Anual
+3. **WhatsApp / e-mail**: Ativar canais de alerta adicionais (já abstraídos em `notification`)
+4. **BigQuery**: Analytics sobre imóveis e comportamento de usuários
 
 ---
 
@@ -144,4 +160,4 @@ Relatórios de ship em `.claude/sdd/reports/` e features arquivadas em `.claude/
 
 ---
 
-_Gerado por `/start` em 2026-05-26. Atualizado em 2026-06-11 para refletir o ship das Fases 1–3 e o progresso da Fase 4._
+_Gerado por `/start` em 2026-05-26. Atualizado em 2026-06-16 para refletir rebranding Mastavista, go-to-market (Fases 1–5 + GTM shipped), domínio e LB GCP._
