@@ -4,7 +4,7 @@ from app.core.config import get_settings
 from app.api.routes import properties, watchlists, users, alerts, admin, risk
 from app.api.routes import admin_plans, admin_users, admin_audit, admin_metrics
 from app.api.routes import calculator, admin_costs, portfolio, admin_dedup
-from app.api.routes import ask, radar_index, market, billing
+from app.api.routes import ask, radar_index, market, billing, admin_sentinel
 from app.api.routes.billing import plans_router
 
 settings = get_settings()
@@ -44,6 +44,7 @@ app.include_router(radar_index.router)
 app.include_router(market.router)
 app.include_router(billing.router)
 app.include_router(plans_router)
+app.include_router(admin_sentinel.router)
 
 
 @app.get("/health")

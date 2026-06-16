@@ -41,15 +41,33 @@ def get_metrics(
         .scalar()
     )
 
-    # Saúde dos coletores (última coleta por banco)
+    # Saúde dos coletores — todas as 16 fontes ativas (bancos + leiloeiros + judicial)
     connector_health = db.execute(text("""
-        SELECT b.code, b.name, MAX(p.last_seen_at) AS last_seen
+        SELECT
+            b.code,
+            b.name,
+            b.source_type,
+            b.tos_compliant,
+            MAX(p.last_seen_at)       AS last_seen,
+            COUNT(p.id)               AS property_count
         FROM banks b
         LEFT JOIN properties p ON p.bank_id = b.id
         WHERE b.active = true
-        GROUP BY b.code, b.name
-        ORDER BY b.name
+        GROUP BY b.code, b.name, b.source_type, b.tos_compliant
+        ORDER BY b.source_type, b.name
     """)).fetchall()
+
+    # Alertas com status = sent/failed hoje (para taxa de entrega)
+    alerts_sent = (
+        db.query(func.count(Alert.id))
+        .filter(Alert.status == "sent", func.date(Alert.created_at) == func.current_date())
+        .scalar()
+    )
+    alerts_failed = (
+        db.query(func.count(Alert.id))
+        .filter(Alert.status == "failed", func.date(Alert.created_at) == func.current_date())
+        .scalar()
+    )
 
     return {
         "users_by_plan": [
@@ -58,8 +76,17 @@ def get_metrics(
         ],
         "alerts_today": alerts_today or 0,
         "alerts_suppressed_today": alerts_suppressed or 0,
+        "alerts_sent_today": alerts_sent or 0,
+        "alerts_failed_today": alerts_failed or 0,
         "connector_health": [
-            {"bank_code": r.code, "bank_name": r.name, "last_seen_at": r.last_seen}
+            {
+                "bank_code": r.code,
+                "bank_name": r.name,
+                "source_type": r.source_type,
+                "tos_compliant": r.tos_compliant,
+                "last_seen_at": r.last_seen,
+                "property_count": r.property_count,
+            }
             for r in connector_health
         ],
     }
